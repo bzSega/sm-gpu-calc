@@ -1,0 +1,35 @@
+{
+ "schema_version": "1.0",
+ "workload": {
+  "file": "requests.csv",
+  "mode": "closed_loop_dag_demo"
+ },
+ "deployment": {
+  "model_profile_id": "glm53-flash",
+  "hardware_profile_id": "h200-8g",
+  "gpus_per_replica": 8,
+  "replicas": 1
+ },
+ "service_model": {
+  "kind": "educational_stub"
+ },
+ "simulation": {
+  "seed": 42,
+  "arrival_horizon_ms": 13656,
+  "drain_after_horizon": true
+ },
+ "economics": {
+  "currency": "USD",
+  "gpu_monthly_cost": 3000,
+  "billing_days": 30,
+  "revenue_mode": "none"
+ },
+ "provenance": {
+  "description": "Anonymized demo: agentic trip-planning task split into 7 model calls (DAG).",
+  "prompt_file": "prompt.md",
+  "step_outputs": "steps/",
+  "token_count_source": "proxy_estimate",
+  "chars_per_token_assumed": 2.7,
+  "privacy": "no personal data; fully synthetic reproducible example"
+ }
+}
