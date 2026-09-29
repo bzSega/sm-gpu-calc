@@ -51,8 +51,15 @@ backend or GPU is required. The unified page has no external runtime resources.
 
 ### Create a workload
 
-**Example** loads 24 synthetic requests arriving every 200 ms. **Create** opens a
-form for total requests, RPS, input tokens and output tokens per request.
+**Example** replays the [live OpenClaw trip-planning run](examples/trip-moscow-nizhny/live_run.md)
+for **3 users starting 5 seconds apart**, each with 6 model calls: **18 calls total**.
+Each user contributes **28,200 input + 2,400 output tokens**. Provider totals are
+measured; their per-call allocation is reconstructed (`live_run_reconstructed`).
+Call arrival intervals are preserved from the trace. This is fixed arrival replay:
+call dependencies do not adapt to simulated completion times.
+
+**Create** opens a uniform-flow form for total model calls, RPS, input tokens and
+output tokens per call; it does not replicate the six-call user workflow.
 **RPS** means incoming requests per second, not completed responses per second.
 The simulator uses token counts; it does not send prompts to an actual model.
 

@@ -6,17 +6,28 @@
 
 ## What this is
 
-A worked example of an **agentic workload**: one user task decomposed into 7 model calls with dependencies (DAG). It demonstrates the `depends_on` fields from the development proposal (§5.1) — this is a *closed-loop / DAG* workload, which the simulation core will support after the open-loop MVP.
+The calculator's **Example** button uses the live OpenClaw run: **3 users starting
+5 seconds apart × 6 calls = 18 model calls**, with **84,600 input / 7,200 output
+tokens** in total. Each user replays the arrival offsets and token counts in
+`requests-live.csv`. Per-call token allocation is reconstructed from measured
+provider totals (28,200 input / 2,400 output per user), not measured per-call usage.
+
+The simulator replays fixed arrivals. `depends_on` remains metadata: later calls
+do not wait for earlier calls to finish in the simulation. The original seven-step
+proxy trace is retained as a separate format/generator example.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `prompt.md` | The anonymized user request (verbatim input to the agent) |
-| `steps/01…07-*.md` | Output of each pipeline step (compact but real content) |
-| `build_trace.py` | Deterministic script: reads steps, estimates tokens, emits `requests.csv` + `manifest.json` |
-| `requests.csv` | Workload trace, one row = one model call |
-| `manifest.json` | Scenario package manifest per proposal §5.3 |
+| `requests-live.csv` | Six calls from the live run; source for the UI demo |
+| `live_run.md` | Timing and token provenance; reconstruction method |
+| `guide.md` | Output of the live trip-planning run |
+| `prompt.md` | The anonymized user request |
+| `steps/01…07-*.md` | Outputs of the earlier seven-step illustrative pipeline |
+| `build_trace.py` | Rebuilds the earlier proxy trace from those steps |
+| `requests.csv` | Earlier seven-call proxy trace; not the UI demo |
+| `manifest.json` | Metadata for the earlier proxy trace |
 
 ## From one request to users and RPS
 
@@ -37,9 +48,9 @@ Throughput is the assumption the simulator lets you vary (see `manifest.json` �
 `deployment`), so plug in your own model profile and hardware. The point of the
 example: **one measured request → users, RPS, replicas and dollars.**
 
-## Token accounting honesty
+## Token accounting for the earlier proxy trace
 
-`token_count_source = proxy_estimate` — tokens are estimated from output character counts
+In `requests.csv`, `token_count_source = proxy_estimate` — tokens are estimated from output character counts
 (`chars / 2.7` for Russian text, rounded), **not** measured by a provider tokenizer.
 Do not treat these numbers as measured usage. Replace with real telemetry when importing
 from an actual provider (`provider_usage`).

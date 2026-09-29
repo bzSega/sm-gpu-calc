@@ -9,14 +9,17 @@ const ScenarioCore = (() => {
     qwenflash: { name: 'Qwen3.8-Flash-Next', weightsGB: 125, layers: 48, kvHeads: 8, headDim: 128, context: 256000, prefill: 4000, decode: 100 }
   };
   const gpus = { H200: { memoryGB: 141, price: 3, speed: 1 }, B200: { memoryGB: 192, price: 5, speed: 1.4 } };
-  // Demo: anonymized trip-planning case (Moscow → Nizhny Novgorod), examples/trip-moscow-nizhny.
-  // One agent task = 7 model calls (DAG trace); replayed as 3 users arriving 5 s apart.
-  const TRIP_STEP = [ // [arrival_ms, input_tokens, output_tokens] from examples/trip-moscow-nizhny/requests.csv
-    [0, 251, 142], [3056, 393, 103], [3056, 393, 93], [5230, 344, 103],
-    [7584, 550, 160], [10964, 411, 141], [10964, 411, 94]
+  // Live OpenClaw trip run: requests-live.csv, six calls per user.
+  // Provider totals: 28,200 input / 2,400 output; per-call allocation is reconstructed.
+  // Fixed arrival replay, NOT dependency-driven execution; three users start 5 s apart.
+  const TRIP_STEP = [ // [arrival_ms, input_tokens, output_tokens, depends_on]
+    [0, 1500, 100, ''], [12171, 3500, 100, 's1'], [20492, 6000, 100, 's1'],
+    [28554, 5500, 300, 's2;s3'], [62352, 6000, 1000, 's4'], [64170, 5700, 800, 's5']
   ];
-  const demo = () => [0, 5000, 10000].flatMap((offset, u) => TRIP_STEP.map(([a, i, o], k) => ({
-    request_id: `trip-u${u + 1}-s${k + 1}`, arrival_ms: offset + a, input_tokens: i, output_tokens: o, token_count_source: 'proxy_estimate'
+  const demo = () => [0, 5000, 10000].flatMap((offset, u) => TRIP_STEP.map(([a, i, o, deps], k) => ({
+    request_id: `trip-u${u + 1}-s${k + 1}`, arrival_ms: offset + a, input_tokens: i, output_tokens: o,
+    token_count_source: 'live_run_reconstructed', model_profile_id: 'glm53-flash', job_id: `trip-u${u + 1}`,
+    depends_on: deps ? deps.split(';').map(id => `trip-u${u + 1}-${id}`).join(';') : ''
   })));
   function parseCSV(text) {
     const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).filter(l => l.trim());

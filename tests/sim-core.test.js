@@ -216,3 +216,31 @@ test('preflight and scheduler agree at the floating-point memory boundary',()=>{
  assert.equal(S.memory(wl,s).fits,true);assert.equal(S.memory(wl,s).memorySlots,1);
  const r=simulate(wl,S.config(s));assert.equal(r.peakActive,1);assert.equal(r.requests[1].startMs,r.requests[0].endMs);
 });
+
+
+test('demo replays the live OpenClaw trace for three independent users', () => {
+  const S = require('../scenario-core.js');
+  const live = S.parseCSV(fs.readFileSync(path.join(ROOT, 'examples/trip-moscow-nizhny/requests-live.csv'), 'utf8'));
+  const demo = S.demo();
+  assert.equal(demo.length, 18);
+  assert.ok(validateWorkload(demo).ok);
+  for (let u = 1; u <= 3; u++) {
+    const calls = demo.filter(r => r.job_id === `trip-u${u}`);
+    assert.equal(calls.length, 6);
+    assert.equal(calls.reduce((sum, r) => sum + r.input_tokens, 0), 28200);
+    assert.equal(calls.reduce((sum, r) => sum + r.output_tokens, 0), 2400);
+    calls.forEach((r, k) => {
+      assert.equal(r.request_id, `trip-u${u}-${live[k].request_id}`);
+      assert.equal(r.arrival_ms, live[k].arrival_ms + (u - 1) * 5000);
+      assert.equal(r.input_tokens, live[k].input_tokens);
+      assert.equal(r.output_tokens, live[k].output_tokens);
+      assert.equal(r.token_count_source, 'live_run_reconstructed');
+      assert.equal(r.model_profile_id, live[k].model_profile_id);
+      assert.equal(r.depends_on, live[k].depends_on.split(';').filter(Boolean).map(id => `trip-u${u}-${id}`).join(';'));
+    });
+  }
+  const settings = {model:'flash', gpu:'H200', replicas:2, cards:8, prefill:4000, decode:100, price:3, reserve:10, concurrency:8, batchGain:50};
+  const restored = S.readScenario(JSON.stringify(S.makeScenario(demo, settings)));
+  assert.deepEqual(restored.workload, demo);
+  assert.equal(simulate(restored.workload, S.config(settings)).completed, 18);
+});
