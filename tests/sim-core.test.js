@@ -244,3 +244,58 @@ test('demo replays the live OpenClaw trace for three independent users', () => {
   assert.deepEqual(restored.workload, demo);
   assert.equal(simulate(restored.workload, S.config(settings)).completed, 18);
 });
+
+test('user controls scale whole live traces and validate workload limits', () => {
+  const S=require('../scenario-core.js');
+  const one=S.demo({users:1,usersPerSecond:2});
+  const many=S.demo({users:10,usersPerSecond:2});
+  assert.equal(one.length,6);
+  assert.equal(many.length,60);
+  assert.equal(many.filter(r=>r.job_id==='trip-u10')[0].arrival_ms,4500);
+  assert.equal(many.reduce((sum,r)=>sum+r.input_tokens,0),282000);
+  assert.equal(many.reduce((sum,r)=>sum+r.output_tokens,0),24000);
+  for(const usersPerSecond of [.01,1000])assert.ok(validateWorkload(S.demo({users:1666,usersPerSecond})).ok);
+  for(const users of [0,1667,1.5,null,NaN,Infinity,'3'])assert.throws(()=>S.demo({users,usersPerSecond:1}));
+  for(const usersPerSecond of [0,.001,1001,null,NaN,Infinity,'1'])assert.throws(()=>S.demo({users:1,usersPerSecond}));
+});
+
+test('arrival peak uses a sliding half-open second, without mutating the workload', () => {
+  const S=require('../scenario-core.js');
+  const wl=[row('c',1000,1,1),row('a',0,1,1),row('b',999,1,1),row('d',1000,1,1)];
+  const copy=JSON.stringify(wl);
+  assert.equal(S.arrivalStats(wl).peakRps,3); // [999,1999): 999,1000,1000
+  assert.equal(S.arrivalStats([row('a',0,1,1),row('b',1000,1,1)]).peakRps,1);
+  assert.equal(S.arrivalStats([row('a',0,1,1),row('b',0,1,1)]).peakRps,2);
+  assert.equal(S.arrivalStats([row('a',5000,1,1)]).peakRps,1);
+  assert.equal(JSON.stringify(wl),copy);
+  assert.throws(()=>S.arrivalStats([]));
+});
+
+test('capacity is per replica and pool, not multiplied by shard count', () => {
+  const S=require('../scenario-core.js');
+  const wl=[row('a',0,100,100)];
+  const settings={model:'flash',gpu:'H200',replicas:2,cards:8,prefill:100,decode:100,price:3,reserve:10,concurrency:4,batchGain:50};
+  // 2 seconds solo service, G(4)=2.5: 1.25 calls/s per replica.
+  const cap=S.capacity(wl,settings);
+  near(cap.replicaRps,1.25);near(cap.poolRps,2.5);
+  near(S.capacity(wl,{...settings,cards:16}).poolRps,2.5);
+  near(S.capacity(wl,{...settings,replicas:4}).poolRps,5);
+  near(S.capacity(wl,{...settings,batchGain:0}).poolRps,1);
+  assert.equal(S.capacity(wl,{...settings,cards:1}).poolRps,0);
+});
+
+test('demo parameters survive JSON round trip only with the matching trace', () => {
+  const S=require('../scenario-core.js');
+  const source={type:'openclaw-live/1',users:10,usersPerSecond:2};
+  const settings={model:'flash',gpu:'H200',replicas:2,cards:8,prefill:4000,decode:100,price:3,reserve:10,concurrency:8,batchGain:50};
+  const wl=S.demo(source);wl[0].custom='preserve me';const saved=S.makeScenario(wl,settings,source);
+  assert.equal(S.readScenario(JSON.stringify(saved)).workload[0].custom,'preserve me');
+  assert.deepEqual(S.readScenario(JSON.stringify(saved)).workload_source,source);
+  assert.deepEqual(S.readScenario(JSON.stringify({...saved,workload:[...wl].reverse()})).workload_source,source);
+  assert.equal(S.readScenario(JSON.stringify(S.makeScenario(wl,settings))).workload_source,undefined);
+  for(const changed of [{...source,users:11},{...source,usersPerSecond:3},{...source,type:'future'},null]){
+    assert.throws(()=>S.readScenario(JSON.stringify({...saved,workload_source:changed})));
+  }
+  const changed=structuredClone(saved);changed.workload[0].input_tokens++;
+  assert.throws(()=>S.readScenario(JSON.stringify(changed)));
+});

@@ -52,7 +52,10 @@ backend or GPU is required. The unified page has no external runtime resources.
 ### Create a workload
 
 **Example** replays the [live OpenClaw trip-planning run](examples/trip-moscow-nizhny/live_run.md)
-for **3 users starting 5 seconds apart**, each with 6 model calls: **18 calls total**.
+with **6 model calls per user**. Set **Users** (1–1,666) and **Users / second**
+(0.01–1,000) in the main controls, then click **Calculate**. Defaults: 3 users,
+0.2 users/s (one every 5 seconds), 18 calls total. These controls apply to the
+OpenClaw example; manual and CSV workloads keep their own arrivals.
 Each user contributes **28,200 input + 2,400 output tokens**. Provider totals are
 measured; their per-call allocation is reconstructed (`live_run_reconstructed`).
 Call arrival intervals are preserved from the trace. This is fixed arrival replay:
@@ -78,6 +81,18 @@ arrival times must be integers, input ≥ 0 and output ≥ 1. Limit: 10,000 requ
 Additional metadata is preserved; dependencies do not affect execution.
 Files are processed locally in your browser.
 
+### Users, calls and RPS
+
+User count sets the run size; users per second sets arrival intensity. For this
+six-call workflow, a sustained **1 user/s produces a mean 6 model calls/s** after
+warm-up. Finite runs and bursts have different arrival patterns.
+
+The dashboard shows the **input peak in any 1-second window** beside an educational
+**pool capacity estimate**, with capacity per replica below it. Click **How to read
+RPS?** for the sustained demand/capacity ratio and the mean output over the entire
+run, including idle time and queue drain. RPS is not GPU utilization: all GPUs in
+a replica jointly serve its calls; do not divide replica RPS by the number of GPUs.
+
 ### Interpret the results
 
 Solo prefill/decode rates are for one request on the **whole replica**, not each
@@ -101,16 +116,17 @@ See the [calculation contract, formats and limitations](docs/UNIFIED-SCENARIO.md
 ### Share settings
 
 URLs can initialize `lang`, `model`, `gpu`, `replicas`, `cards`, `prefill`, `decode`,
-`price`, `reserve`, `concurrency` and `batchGain`. Model keys are `glm53`, `flash`
+`price`, `reserve`, `concurrency` and `batchGain`. Demo parameters are `users`
+and `usersPerSecond`. Model keys are `glm53`, `flash`
 and `qwenflash`. `progress=0..1` selects a point in the run; `drill=1` opens a replica.
 
 ```text
 index.html?lang=en&model=glm53&gpu=B200&replicas=2&cards=8&concurrency=8&batchGain=50
-index.html?lang=ru&progress=0.5&drill=1
+index.html?lang=en&users=100&usersPerSecond=1&progress=0.5&drill=1
 ```
 
 URLs contain settings, not imported workload data. Use a saved JSON scenario to
-reproduce a custom workload. Older `/1` scenarios reopen with one active request
+reproduce a custom workload. Demo JSON also saves user count and arrival rate. Older `/1` scenarios reopen with one active request
 per replica; new saves use `/2`.
 
 ### Publish to static hosting

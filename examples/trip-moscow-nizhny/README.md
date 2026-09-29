@@ -7,10 +7,14 @@
 ## What this is
 
 The calculator's **Example** button uses the live OpenClaw run: **3 users starting
-5 seconds apart × 6 calls = 18 model calls**, with **84,600 input / 7,200 output
+5 seconds apart × 6 calls = 18 model calls** by default, with **84,600 input / 7,200 output
 tokens** in total. Each user replays the arrival offsets and token counts in
 `requests-live.csv`. Per-call token allocation is reconstructed from measured
 provider totals (28,200 input / 2,400 output per user), not measured per-call usage.
+
+The main Users and Users / second controls scale this six-call trace (up to
+1,666 users). The rate is user arrivals, not individual model calls: sustained
+call RPS is six times the user rate. JSON scenarios preserve these controls.
 
 The simulator replays fixed arrivals. `depends_on` remains metadata: later calls
 do not wait for earlier calls to finish in the simulation. The original seven-step
