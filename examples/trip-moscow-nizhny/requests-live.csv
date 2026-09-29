@@ -1,0 +1,7 @@
+request_id,arrival_ms,model_profile_id,input_tokens,output_tokens,token_count_source,job_id,depends_on
+s1,0,glm53-flash,1500,100,live_run_reconstructed,trip-msk-nnovy,
+s2,12171,glm53-flash,3500,100,live_run_reconstructed,trip-msk-nnovy,s1
+s3,20492,glm53-flash,6000,100,live_run_reconstructed,trip-msk-nnovy,s1
+s4,28554,glm53-flash,5500,300,live_run_reconstructed,trip-msk-nnovy,s2;s3
+s5,62352,glm53-flash,6000,1000,live_run_reconstructed,trip-msk-nnovy,s4
+s6,64170,glm53-flash,5700,800,live_run_reconstructed,trip-msk-nnovy,s5
