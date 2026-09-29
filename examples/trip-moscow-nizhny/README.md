@@ -18,6 +18,25 @@ A worked example of an **agentic workload**: one user task decomposed into 7 mod
 | `requests.csv` | Workload trace, one row = one model call |
 | `manifest.json` | Scenario package manifest per proposal §5.3 |
 
+## From one request to users and RPS
+
+The live run gives a realistic per-request budget: **~31k tokens (28.2k in / 2.4k out), 6 model calls, ~64 s wall time**. That turns one trace into capacity math:
+
+- `requests/day = users × requests_per_user_per_day`
+- `avg req/s = requests/day / 86400`; size for peak ≈ 5× average
+- One 8×H200 replica at an assumed **~1,500 tok/s output** serves ≈ `1500 / 2400 ≈ 0.6 req/s` (output-bound; assumption, not benchmark)
+- At full utilization: **~$0.015 per request** (8 GPUs × ~$0.00116/GPU-s × 1.6 s busy)
+
+| Scenario | Users | Req/user/day | Req/day | avg req/s | peak ×5 | Replicas | GPUs | Cost/month |
+|---|---|---|---|---|---|---|---|---|
+| Pilot | 10k | 0.2 | 2k | 0.02 | 0.12 | 1 | 8 | $3k |
+| Growing | 100k | 0.5 | 50k | 0.58 | 2.9 | 5 | 40 | $120k |
+| Mass | 1M | 0.5 | 500k | 5.8 | 29 | 48 | 384 | $1.15M |
+
+Throughput is the assumption the simulator lets you vary (see `manifest.json` →
+`deployment`), so plug in your own model profile and hardware. The point of the
+example: **one measured request → users, RPS, replicas and dollars.**
+
 ## Token accounting honesty
 
 `token_count_source = proxy_estimate` — tokens are estimated from output character counts
