@@ -7,7 +7,8 @@ OUT_DIR="${1:-$ROOT/releases}"
 mkdir -p "$OUT_DIR"
 OUT_DIR=$(cd "$OUT_DIR" && pwd)
 SOURCES=(simulation.html sim-core.js scenario-core.js)
-PAGES=(index.html "${SOURCES[@]}")
+ASSETS=(sitemap.xml share-preview.png)
+PAGES=(index.html "${SOURCES[@]}" "${ASSETS[@]}")
 
 echo 'Version JavaScript URLs'
 # Stable content hashes invalidate long-lived browser caches on static hosts.
@@ -27,6 +28,8 @@ PY_ASSETS
 
 echo 'Sync distribution'
 for f in "${SOURCES[@]}"; do cp "$f" "distr/$f"; done
+cp docs/screenshot-unified.png distr/share-preview.png
+cp sitemap.xml distr/sitemap.xml
 cp simulation.html distr/index.html
 
 echo 'Core tests'
@@ -39,6 +42,8 @@ done
 
 echo 'Verify distribution'
 for f in "${SOURCES[@]}"; do cmp "$f" "distr/$f"; done
+cmp docs/screenshot-unified.png distr/share-preview.png
+cmp sitemap.xml distr/sitemap.xml
 cmp simulation.html distr/index.html
 COMMIT=$(git rev-parse --short HEAD)
 DIRTY=''

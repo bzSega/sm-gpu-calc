@@ -27,7 +27,7 @@ on each GPU. Playback controls also work here.
 ### What you can explore
 
 - **Workload:** start with the demo, create a uniform request stream, or import CSV.
-- **Hardware:** choose a model profile, H200/B200, 1–16 GPUs per replica and 1–64 replicas.
+- **Hardware:** choose a model profile, H200/B200/B300, 1–16 GPUs per replica and 1–64 replicas.
 - **Parallelism:** allow 1–256 active requests per replica and set an explicit throughput-gain assumption.
 - **Memory:** each active request reserves KV; requests wait if slots or memory are unavailable. Memory is released on completion.
 - **Playback:** follow prefill/decode phases, queue length, completed requests and free KV memory. Drill into a replica without stopping playback.
@@ -157,10 +157,27 @@ JavaScript URLs with content hashes, and creates a ZIP under `releases/`.
 It requires Node.js, Python 3 and Chrome (`CHROME_BIN` can specify its path).
 There is no automatic upload.
 
-Deploy the **entire generated ZIP** together. It contains only the allowed HTML,
-JavaScript and version files. Content hashes prevent a new page from using an old
+Deploy the **entire generated ZIP** together. It contains the two HTML pages,
+two JavaScript cores, `VERSION.txt`, `sitemap.xml` and `share-preview.png`.
+Content hashes prevent a new page from using an old
 cached engine. Rebuild after editing JavaScript; copying only `index.html` is not
 sufficient. Use UTF-8 and serve `index.html` as the directory index.
+
+### Search and link previews
+
+The hosted page includes a descriptive title, description, canonical URL,
+Open Graph / Twitter preview and WebApplication structured data. The canonical
+search page is `https://mikhaylov.com/gpu-calc/`; alternate HTML filenames and
+scenario query strings point to it. Russian metadata is present in the initial
+HTML; the English UI updates metadata in the browser and is not a separate
+search landing page. The initial heading and JavaScript-disabled explanation
+are readable without rendering the application.
+
+The release copies the English overview screenshot to `share-preview.png` and
+publishes [the sitemap](https://mikhaylov.com/gpu-calc/sitemap.xml). For a different
+host, update the absolute URLs in the HTML and sitemap. Reference the sitemap
+from the **host's root** `robots.txt`, or submit it to search webmaster tools.
+No analytics counters are installed.
 
 ## Repository
 

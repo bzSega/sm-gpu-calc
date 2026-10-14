@@ -45,3 +45,6 @@ This synchronizes `simulation.html` to `distr/index.html` and `distr/simulation.
 copies both cores, versions JS URLs by content hash, runs tests and render checks,
 and creates a ZIP in `releases/`. Inspect the resulting screenshots and ZIP.
 Deploy the entire ZIP together; the script does not upload to hosting.
+The seven-file allowlist also includes `sitemap.xml` and `share-preview.png`,
+copied from the root sitemap and `docs/screenshot-unified.png` respectively.
+Keep canonical, structured-data and preview URLs consistent when changing hosts.
