@@ -101,6 +101,15 @@ period totals and the replay's measured one-second arrival peak, plus its averag
 output including idle time and drain. RPS is not GPU utilization; all GPUs within
 a replica serve each call together.
 
+### Hardware presets
+
+The hardware selector supports H200 (141 GB), B200 (192 GB), and B300 (288 GB).
+B300 memory follows the [NVIDIA DGX B300 User Guide](https://docs.nvidia.com/dgx/dgxb300-user-guide/introduction-to-dgxb300.html),
+checked 2026-10-14. Its initial prefill/decode rates and $5/GPU-hour rental are
+**placeholders copied from the B200 preset**, not B300 benchmarks or a provider quote.
+Replace them with your measured rates and rental. Extra VRAM changes memory admission;
+it does not automatically increase throughput. Memory uses decimal GB and the selected runtime reserve.
+
 ### Interpret the results
 
 Solo prefill/decode rates are for one request on the **whole replica**, not each

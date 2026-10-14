@@ -389,3 +389,25 @@ test('a valid sparse hourly window may contain no tasks and must stay empty',()=
  const p=S.demandPlan(s);assert.equal(p.peakHour,1);assert.equal(p.sampleTasks,0);assert.equal(p.totalCalls,6);
  assert.deepEqual(S.periodDemo(s),[]);
 });
+
+test('B300 supports larger memory placement and JSON replay without an implicit speedup',()=>{
+  const S=require('../scenario-core.js');
+  const wl=[row('a',0,1000,100),row('b',0,1000,100)];
+  const s={model:'glm53',gpu:'B300',replicas:1,cards:4,prefill:2800,decode:84,price:5,reserve:10,concurrency:8,batchGain:50};
+  assert.equal(S.validateSettings(s),true);
+  const mem=S.memory(wl,s);
+  assert.equal(mem.total,1152);
+  near(mem.reservedGB,115.2);near(mem.kvCapacityGB,286.8);
+  assert.equal(mem.fits,true);
+  assert.equal(S.memory(wl,{...s,gpu:'B200'}).fits,false);
+  near(S.config(s).kvCapacityGB,286.8);
+  const restored=S.readScenario(JSON.stringify(S.makeScenario(wl,s)));
+  assert.equal(restored.settings.gpu,'B300');
+  assert.deepEqual(S.config(restored.settings),S.config(s));
+  const result=simulate(restored.workload,S.config(restored.settings));
+  assert.equal(result.completed,2);
+  // Both eight-card pools have enough memory: identical user rates must stay identical.
+  const b300=simulate(wl,S.config({...s,cards:8}));
+  const b200=simulate(wl,S.config({...s,cards:8,gpu:'B200'}));
+  near(b300.durationMs,b200.durationMs);near(b300.totalCostUSD,b200.totalCostUSD);
+});

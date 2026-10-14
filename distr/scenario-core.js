@@ -8,7 +8,14 @@ const ScenarioCore = (() => {
     flash: { name: 'GLM-5.3-Flash', weightsGB: 320, layers: 60, kvHeads: 8, headDim: 128, context: 128000, prefill: 4000, decode: 100 },
     qwenflash: { name: 'Qwen3.8-Flash-Next', weightsGB: 125, layers: 48, kvHeads: 8, headDim: 128, context: 256000, prefill: 4000, decode: 100 }
   };
-  const gpus = { H200: { memoryGB: 141, price: 3, speed: 1 }, B200: { memoryGB: 192, price: 5, speed: 1.4 } };
+  const gpus = {
+    H200: { memoryGB: 141, price: 3, speed: 1 },
+    B200: { memoryGB: 192, price: 5, speed: 1.4 },
+    // NVIDIA DGX B300 User Guide: 8 x 288 GB; checked 2026-10-14.
+    // Rates and rental are placeholders copied from B200, not B300 measurements/quotes.
+    B300: { memoryGB: 288, price: 5, speed: 1.4, assumptionsFrom: 'B200',
+      memorySource: 'https://docs.nvidia.com/dgx/dgxb300-user-guide/introduction-to-dgxb300.html', memorySourceChecked: '2026-10-14' }
+  };
   // Live OpenClaw trip run: requests-live.csv, six calls per user.
   // Provider totals: 28,200 input / 2,400 output; per-call allocation is reconstructed.
   // Fixed arrival replay, NOT dependency-driven execution; user count and arrival rate are configurable.
