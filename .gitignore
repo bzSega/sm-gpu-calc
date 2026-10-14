@@ -1,0 +1,10 @@
+releases/
+.DS_Store
+
+# Keep local planning and agent instructions outside the public source tree.
+[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
+[Aa][Gg][Ee][Nn][Tt][Ss].override.[Mm][Dd]
+[Pp][Rr][Dd].[Mm][Dd]
+[Pp][Ll][Aa][Nn].[Mm][Dd]
+docs/proposals/
+skills/

@@ -1,0 +1,2 @@
+SM GPU Calc distributive
+built: 2026-10-14T20:06Z source sha256:a180836285dafbe9031b32803f1e416f428be457ea5a62985f30bec03c8025e0
