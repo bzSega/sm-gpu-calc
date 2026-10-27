@@ -4,9 +4,12 @@ const StartupScene=(()=>{
  const NS='http://www.w3.org/2000/svg',XHTML='http://www.w3.org/1999/xhtml';
  function create(svg,onAction){
   function el(tag,attrs={},parent=svg,text){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;parent.append(e);return e;}
+  const defs=el('defs'),deskClip=el('clipPath',{id:'startup-desk-occlusion',clipPathUnits:'userSpaceOnUse'},defs);
+  // The desk is baked into the background. Hide seated legs behind its near edge.
+  el('polygon',{points:'0,0 600,0 600,270 0,510'},deskClip);
   const backdrop=el('image',{href:'assets/server-room.png',width:1586,height:992});
   const shade=el('rect',{width:1586,height:992,fill:'#182a4c',opacity:0,'pointer-events':'none'});
-  const paths=el('g',{'aria-hidden':'true'}),actors=el('g',{'aria-hidden':'true'}),rackLayer=el('g'),flightLayer=el('g',{'aria-hidden':'true','data-flow-effects':''});
+  const paths=el('g',{'aria-hidden':'true'}),actors=el('g',{'aria-hidden':'true','clip-path':'url(#startup-desk-occlusion)'}),rackLayer=el('g'),flightLayer=el('g',{'aria-hidden':'true','data-flow-effects':''});
   const inbound=el('path',{d:'M 290 430 L 510 570 L 720 490 L 880 410',fill:'none',stroke:'#cc9c4d','stroke-width':5,'stroke-dasharray':'10 12',opacity:.8},paths);
   const outbound=el('path',{d:'M 910 450 L 710 550 L 480 640 L 260 480',fill:'none',stroke:'#92cfaf','stroke-width':5,'stroke-dasharray':'10 12',opacity:.7},paths);
   const queueGroup=el('g',{},paths);el('rect',{x:510,y:515,width:168,height:67,rx:6,fill:'#433e2c',stroke:'#c3a66b','stroke-width':3},queueGroup);
@@ -14,7 +17,11 @@ const StartupScene=(()=>{
   const queueValue=el('text',{x:594,y:569,'text-anchor':'middle',fill:'#ffcf76','font-size':26,'font-family':'system-ui','font-weight':800},queueGroup);
   let key='',rackRefs=[],lastArrived=0,lastCompleted=0,flights=[];
   function button(x,y,width,label,action,parent=rackLayer){const f=el('foreignObject',{x,y,width,height:60},parent),b=document.createElementNS(XHTML,'button');b.setAttribute('class','world-button');b.textContent=label;b.onclick=action;f.append(b);return b;}
-  function person(x,y,variant){const g=el('g',{'data-visitor':variant},actors);el('path',{d:`M ${x-12} ${y+9} H ${x+15} V ${y+16} H ${x-12} Z M ${x-8} ${y+16} V ${y+44} H ${x-4} V ${y+16} M ${x+10} ${y+16} V ${y+44} H ${x+14} V ${y+16}`,fill:'#596b4b',stroke:'#334d38','stroke-width':2},g);el('ellipse',{cx:x+8,cy:y+50,rx:24,ry:9,fill:'#344c4430'},g);el('image',{href:'assets/visitor.png',x:x-35,y:y-45,width:100,height:110,style:variant===1?'filter:hue-rotate(25deg)':variant===2?'filter:hue-rotate(-25deg)':''},g);}
+  function person(x,y,variant){
+   const g=el('g',{'data-visitor':variant},actors);
+   el('image',{href:'assets/visitor.png',x,y,width:145,height:145,style:variant===1?'filter:hue-rotate(25deg)':variant===2?'filter:hue-rotate(-25deg)':''},g);
+  }
+
 
   function envelope(parent,x=0,y=0,color='#efbd65'){const g=el('g',{transform:`translate(${x} ${y})`},parent);el('rect',{x:-13,y:-9,width:26,height:18,fill:color,stroke:'#624e31','stroke-width':2},g);el('path',{d:'M -12 -8 L 0 1 L 12 -8',fill:'none',stroke:'#624e31','stroke-width':2},g);return g;}
   function rack(x,y,id,state,label,selected){
@@ -50,7 +57,7 @@ const StartupScene=(()=>{
 
     if(state.hardware&&!open)button(270,350,260,state.model?(lang==='ru'?'Открыть сервис':'Open service'):(lang==='ru'?'Выбрать модель':'Choose model'),()=>onAction(state.model?'open':'models'));
     if(open){button(175,520,230,lang==='ru'?'Поток людей':'Visitors',()=>onAction('visitors'));button(copies>3?500:800,copies>3?650:660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));
-     person(120,355,0);person(250,300,1);person(380,245,2);}
+     person(75,375,0);person(175,332,1);person(270,287,2);}
    }
    const phase=state.live?.calendar.phase||'morning';shade.setAttribute('opacity',phase==='night'?.36:phase==='peak'?.08:0);
    paths.style.display=open?'':'none';queueLabel.textContent=lang==='ru'?'Очередь':'Queue';queueValue.textContent=state.live?.queued||0;
