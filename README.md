@@ -10,17 +10,23 @@ An interactive, educational GPU inference simulator. Explore how request arrival
 parallel processing and KV memory affect queues and latency. All calculations run
 in your browser; model profiles and throughput curves are assumptions, not benchmarks.
 
-### Workload and live GPU pool
+### Guided setup
 
-Play the timeline or move the slider to inspect active requests, the queue and free
-KV memory on each replica.
+Start with **Workload → Model and GPUs → Speed**, then open **Results** and
+**Simulation**. Explanations connect the settings to memory and response time.
+Setup and results use a responsive light layout. Imported workloads remain local.
 
-![Workload simulation: GPU replicas, live KV memory, queue timeline and results](docs/screenshot-unified.png)
+![Guided model and GPU setup with memory and model-copy explanations](docs/screenshot-unified.png)
 
 ### Inside a replica
 
 Open a replica to see model shards, KV reservations, runtime reserve and free memory
 on each GPU. Playback controls also work here.
+
+The simulation uses the original deterministic scheduler. Slot occupancy and KV
+use have separate indicators; the explanation describes the selected instant,
+not measured hardware utilization. An illustrative speed example uses your
+workload’s mean token lengths; actual latency metrics come from the full replay.
 
 ![Replica detail: per-GPU memory, free capacity and synchronized playback controls](docs/screenshot-unified-rack.png)
 
@@ -136,6 +142,7 @@ URLs can initialize `lang`, `model`, `gpu`, `replicas`, `cards`, `prefill`, `dec
 `price`, `reserve`, `concurrency` and `batchGain`. Demo parameters are `users`, `tasksPerUser`, `periodHours`,
 `profile=uniform|hourly`, `windowMinutes` and `hourWeights` (24 comma-separated weights). Model keys are `glm53`, `flash`
 and `qwenflash`. `progress=0..1` selects a point in the run; `drill=1` opens a replica.
+`view=scenario|review|simulation` selects a section and `step=0|1|2` a setup step.
 
 ```text
 index.html?lang=en&model=glm53&gpu=B200&replicas=2&cards=8&concurrency=8&batchGain=50

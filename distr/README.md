@@ -1,8 +1,11 @@
 # SM GPU Calc — static distribution
 
-Open `index.html`: workload → queue → GPU replicas → results. Demo, manual load
+Open `index.html`: guided setup → results → simulation. The setup has workload,
+model/GPU and speed steps in a responsive light interface. Demo, manual load
 and CSV; inline GPU memory view, timeline, variant comparison, CSV results and
 JSON scenario save/replay. RU/EN. All calculation stays in the browser.
+
+Navigation URLs: `view=scenario|review|simulation`, `step=0|1|2`.
 
 Keep `sim-core.js` and `scenario-core.js` next to the HTML, including for file://.
 `simulation.html` is the same workspace at the existing simulation URL.

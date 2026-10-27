@@ -1,3 +1,2 @@
 SM GPU Calc distributive
-built: 2026-10-14T20:40Z
-source sha256: 8b9ce5f04a5fe52ff2773af6e3a5731c49414491137d97df3db1db042243e4ee
+built: 2026-10-27T07:31Z commit 6035032-dirty

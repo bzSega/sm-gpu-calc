@@ -13,7 +13,7 @@ and assumptions; include meaningful semantic tests.
 - `sim-core.js` and `scenario-core.js` stay DOM-free and dependency-free.
 - Preserve static hosting, file:// support with adjacent JS files, RU/EN, URL settings
   and local-only processing of uploaded workloads.
-- Preserve the 1920×1080 scaled stage, dark grid, cream text, coral weights and mint KV.
+- Preserve the light guided shell and 1920px scaled simulation scene, coral weights and green KV. Setup and results reflow on narrow screens.
 - Replica detail opens within the same scenario and shares playback state.
 - Update the UI through its central `update()` and keep calculations in the core.
 - Profiles and throughput curves are educational assumptions unless calibrated.
