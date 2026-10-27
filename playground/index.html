@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>GPU Calc Playground</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f8f7f0;color:#283b35;font:16px/1.6 system-ui,sans-serif}main{max-width:1280px;margin:auto;padding:32px 24px}header{display:flex;justify-content:space-between;gap:20px;align-items:center}h1{font-size:32px;line-height:1.2}h2{font-size:24px}nav{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}button,a{color:inherit}button{font:inherit;background:white;border:1px solid #a8b5aa;border-radius:10px;padding:12px 18px;cursor:pointer}button[aria-pressed=true]{background:#365e4e;color:white}section{background:white;border:1px solid #d8ddd3;border-radius:16px;padding:24px;margin:20px 0}img{display:block;width:100%;height:auto;border-radius:12px}small{display:block;color:#59665e}.path{font-weight:600;color:#365e4e}output{display:block;background:#edf3e9;padding:16px;border-radius:10px}footer{margin:24px 0}@media(max-width:600px){main{padding:20px 14px}header{align-items:flex-start}h1{font-size:26px}section{padding:16px}}
+</style>
+<main>
+<header><div><small>GPU CALC / PLAYGROUND</small><h1 id="title"></h1></div><button id="language" type="button">EN</button></header>
+<p id="intro"></p>
+<nav id="worlds" aria-label="Setting"></nav>
+<section><h2 id="world-title"></h2><p id="description"></p><p class="path" id="path"></p><small id="stage-note"></small></section>
+<img src="assets/worlds-concept.png" id="concept" alt="">
+<section><h2 id="core-title"></h2><p id="core-note"></p><output id="core-status" aria-live="polite"></output></section>
+<footer><a href="../simulation.html" id="stable"></a> · <a href="README.md">README</a></footer>
+</main>
+<script src="../sim-core.js"></script>
+<script src="../scenario-core.js"></script>
+<script src="app.js"></script>
+</html>
