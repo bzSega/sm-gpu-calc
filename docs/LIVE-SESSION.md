@@ -47,7 +47,8 @@ Prototype bounds are explicit: 64 replicas, 256 active requests per replica,
 10,000 requests over a live session, 30,000 journaled actions, and observed live
 model time at most 1e9 ms. A limit throws before adding the rejected input;
 requests are never silently dropped. Finite `simulate` retains its previous
-workload/time behavior. History compaction for an unlimited game is not included.
+workload/time behavior. These default full-history bounds are retained for finite/replay consumers.
+The playable game opts into the recent-history mode described below.
 
 ## Game session controller
 
@@ -115,3 +116,47 @@ visitor against the profile in effect when that visitor was generated.
 accepted calls. Shrinking hardware cannot strand queued long requests after
 switching back to a short task. This conservative game rule requires every copy
 to fit one such request; it does not model specialized routing.
+
+## Recent-history game mode
+
+`SimCore.createSession(config, {history:'recent'})` uses the same event scheduler
+with different retention. It removes the cumulative 10,000-request and
+30,000-action stops, retains at most512 recent completed records plus active
+work, and up to256 latest completion witnesses by replica/input/output shape.
+Witnesses let the learning observer see a real completed short or long request
+even after many completions between frames. `records()` is a bounded observation
+window in this mode, not the complete historical schedule. `finish()` rejects
+because a full finite result cannot be derived from that window.
+
+The FIFO stores lossless runs of consecutive numeric IDs with identical token
+counts and exact integer arrival progression. Other rows remain separate runs;
+lexical tie ordering, admission, work, KV and cost formulas are unchanged.
+`outstandingSamples()` returns each run's endpoints, pending arrivals and active
+work for maximum-context memory checks; `unfinished()` explicitly expands all
+unfinished rows. Do not use samples to count requests or compute mean latency.
+Caller-generated IDs must remain unique for the lifetime of a recent session;
+the game uses increasing user IDs. The core checks collisions against current
+work and retained records, not an unbounded set of all archived IDs.
+
+`save()` returns `sm-gpu-live-recent/1`: a compact operational checkpoint, not an
+action journal. Restore validates row/config ranges, ID overlap, counters and
+conservation, stage/remaining work, KV, timing and actual/pending configurations.
+It preserves event anchor separately from observation time, so checkpointing is
+not a service boundary. Historical aggregates cannot be independently replayed
+after detailed history is discarded; they are saved game state, not calibrated
+or tamper-proof evidence. The default finite/replay API retains journal replay.
+
+`GameSession.create({...options, history:'recent'})` selects this mode;
+`StartupGame` always does so. `GameSession.restore(oldSave, {history:'recent'})`
+validates and migrates legacy journals. New game saves use
+`ai-startup-session/2`; source counters, retained tasks, profiles and serving
+metadata are cross-checked. Large advances generate in model-minute chunks;
+no queue or day is reset at those boundaries. Recent mode extends time/arrival
+range to JavaScript's safe integer milliseconds while keeping token limits and
+per-enqueue validation bounds. Finite calculator defaults and its release files
+remain unchanged. Offline catch-up is still unsupported.
+
+`recent-session.test.js` covers100,000 completed calls, multiple game days,
+a million waiting calls compressed without dropping work, exact mixed/fractional
+FIFO comparisons, draining maintenance, pending calls, legacy migration,
+corrupted checkpoints, lifetime counters and teaching completion witnesses.

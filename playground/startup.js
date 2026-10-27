@@ -33,7 +33,7 @@ const StartupGame=(()=>{
       open(){
         if(live)throw Error('Service is already open');
         if(!model||!api.preview(model).fits)throw Error('Model is not ready');
-        live=G.create({settings:settings(),popularity:2,world:theme,profile:PROFILE});return api.inspect();
+        live=G.create({settings:settings(),popularity:2,world:theme,profile:PROFILE,history:'recent'});return api.inspect();
       },
       advanceTo(t){if(!live)throw Error('Service is closed');live.advanceTo(t);return api.inspect();},
       setPopularity(value){if(!live)throw Error('Service is closed');live.setPopularity(value);return api.inspect();},
@@ -53,7 +53,7 @@ const StartupGame=(()=>{
       save(){return {schema:'ai-startup-game/1',world:theme,hardware:hardware?{...hardware}:null,model,live:live?live.save():null};},
       _restoreLive(saved){
         if(!model||!hardware)throw Error('Invalid open service');
-        const candidate=G.restore(saved),expected=settings();
+        const candidate=G.restore(saved,{history:'recent'}),expected=settings();
         const savedSession=candidate.save(),actual=savedSession.settings,profile=savedSession.initialProfile||savedSession.profile;
         if(!profileId(candidate.inspect().profile)||savedSession.profileChanges?.some(c=>!profileId(c.profile)))throw Error('Unknown game task profile');
         if(Object.keys(expected).some(k=>actual[k]!==expected[k])||Object.keys(PROFILE).some(k=>profile[k]!==PROFILE[k])||candidate.inspect().world!==theme)throw Error('Game construction does not match session');

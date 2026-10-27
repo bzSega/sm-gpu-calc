@@ -81,10 +81,21 @@ without this presentation state open with copy 1 selected.
 Browser schema `ai-startup-browser/1` wraps the separate construction and live
 session formats. It is not the calculator's CSV/scenario format.
 
-The prototype retains at most10,000 calls and30,000 live actions. On a request
-quota error the UI stops new arrivals and keeps processing existing work; it
-never truncates a queue. Live observed model time is bounded by1e9ms. Unlimited
-history and offline progression are not implemented.
+The playable service has no lifetime 10,000-call stop. Completed history is
+summarized into lifetime counters, a recent reply window and teaching witnesses.
+Waiting requests remain intact: consecutive identical requests with exact
+arrival progressions use lossless FIFO runs. This is storage compression, not
+request sampling or a change to GPU capacity. A varied or heavily overloaded
+queue can still grow; browser storage/import limits remain explicit.
+
+Live game saves use `ai-startup-session/2` with a validated operational
+checkpoint (`sm-gpu-live-recent/1`). Old journal-based saves migrate on load
+without restarting active work or erasing pending calls. A checkpoint preserves
+the event anchor separately from the observed time, remaining work, maintenance,
+queue, rates and lifetime counters. Archived historical counters are saved game
+data, not independently replayable measurements. If an older version already
+stopped arrivals, set the desired arrival rate again; its previous value was
+not retained. Offline progression is not implemented.
 
 ## Files
 
