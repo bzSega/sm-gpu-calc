@@ -68,7 +68,9 @@ The browser saves locally every15seconds and on important actions, hiding or
 leaving the page. `Continue` restores the service without offline catch-up.
 No workload is sent over the network or included in the URL.
 
-Settings provide save-file download/import (JSON, max8MiB). Starting fresh
+Settings provide save-file download/import (JSON, max8MiB). Import keeps the
+current interface language; a saved service cannot silently switch RU to EN.
+Changing language in settings also updates the URL, so reload keeps that choice. Starting fresh
 requires confirmation and retains a previous local save, recoverable from
 settings. Storage errors are reported; use download when browser storage is full.
 Selected copy and an open copy/GPU/overview window are saved too. Older saves

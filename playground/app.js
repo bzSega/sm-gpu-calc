@@ -13,6 +13,7 @@ const t=k=>COPY[lang][k],fmt=(v,d=1)=>new Intl.NumberFormat(lang,{maximumFractio
 function el(tag,text,parent,attrs={}){const e=document.createElement(tag);if(text!==null)e.textContent=text;for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(parent)parent.append(e);return e;}
 function btn(text,fn,parent,primary=false){const e=el('button',text,parent,{type:'button'});if(primary)e.className='primary';e.onclick=fn;return e;}
 function say(text){$('notice').textContent=text;$('notice').hidden=false;noticeUntil=performance.now()+5500;}
+function chooseLanguage(value){if(!['ru','en'].includes(value))return;lang=value;const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);preferences();}
 function preferences(){try{localStorage.setItem(PREF,JSON.stringify({lang,reduced,world:preferredWorld}));}catch{}}
 function payload(){return {schema:'ai-startup-browser/1',preferences:{lang,reduced},ui:{selected,detail},learning:guide.save(),game:game.save()};}
 function persist(announce=false){if(!game)return;try{stored=JSON.stringify(payload());localStorage.setItem(KEY,stored);if(announce)say(t('saved'));}catch{say(t('saveError'));}}
@@ -122,7 +123,7 @@ function settingsPanel(){panel(t('settings'),body=>{
  el('h3',t('world'),body);const choices=el('div',null,body,{class:'choices'});
  for(const [i,name] of ['server','workshop','orbital'].entries()){const world=['server-room','workshop','orbital'][i],b=btn('',()=>{switchWorld(world);settingsPanel();},choices);b.className='choice';b.dataset.worldChoice=world;b.setAttribute('aria-pressed',String((game?.inspect().world||preferredWorld)===world));const thumb=el('span',null,b,{class:'world-thumb','aria-hidden':'true'});thumb.style.backgroundImage=`url(assets/${world}.png)`;thumb.style.backgroundSize='cover';el('strong',t(name),b);}
  el('p',t('worldInfo'),body,{class:'worlds-info'});
- const l=el('label',t('language'),body,{class:'field'}),select=el('select',null,l,{'aria-label':t('language')});for(const [value,label] of [['ru','Русский'],['en','English']])el('option',label,select,{value});select.value=lang;select.onchange=()=>{lang=select.value;preferences();render(true);settingsPanel();};
+ const l=el('label',t('language'),body,{class:'field'}),select=el('select',null,l,{'aria-label':t('language')});for(const [value,label] of [['ru','Русский'],['en','English']])el('option',label,select,{value});select.value=lang;select.onchange=()=>{chooseLanguage(select.value);render(true);settingsPanel();};
  const r=el('label',t('reduced'),body,{class:'field'}),check=el('input',null,r,{type:'checkbox','aria-label':t('reduced')});check.checked=reduced;check.onchange=()=>{reduced=check.checked;preferences();render(true);};
  const a=el('div',null,body,{class:'action-row'});btn(t('done'),closePanel,a,true);if(game){btn(t('save'),()=>persist(true),a);btn(t('export'),download,body);}btn(t('load'),()=>$('save-input').click(),body);
  try{if(localStorage.getItem(KEY+'-previous'))btn(t('previous'),restorePrevious,body);}catch{}
@@ -160,7 +161,7 @@ $('panel-world').onchange=()=>switchWorld($('panel-world').value);
 $('learning-menu').onclick=()=>{guide.setEnabled(true);persist();menu=false;render(true);lessonPanel();};$('sandbox-menu').onclick=()=>{guide.setEnabled(false);menu=false;persist();render(true);};$('lesson-open').onclick=lessonPanel;
 $('new-game').onclick=newGame;$('continue').onclick=continuation;$('settings').onclick=settingsPanel;$('load-menu').onclick=()=>$('save-input').click();$('menu-toggle').onclick=()=>{menu=true;persist();render(true);};$('close-panel').onclick=closePanel;$('queue-button').onclick=whyPanel;
 $('rack-dock').onclick=rackPanel;$('terminal-dock').onclick=()=>{const s=game.inspect();if(s.live)copiesPanel();else if(s.model)readyPanel();else if(s.hardware)modelsPanel();else installPanel();};$('visitors-dock').onclick=visitorsPanel;
-$('save-input').onchange=async()=>{const file=$('save-input').files[0];$('save-input').value='';if(!file)return;try{if(file.size>8*1024*1024)throw Error('size');const {candidate,prefs,ui,learning}=readPayload(await file.text());if(game)persist();lang=prefs.lang;reduced=prefs.reduced;closePanel();attach(candidate,ui,learning);persist();preferences();}catch{say(t('badSave'));}};
+$('save-input').onchange=async()=>{const file=$('save-input').files[0];$('save-input').value='';if(!file)return;try{if(file.size>8*1024*1024)throw Error('size');const {candidate,prefs,ui,learning}=readPayload(await file.text());if(game)persist();reduced=prefs.reduced;closePanel();attach(candidate,ui,learning);persist();preferences();}catch{say(t('badSave'));}};
 document.addEventListener('visibilitychange',()=>{if(clock)clock.visibility(!document.hidden);if(document.hidden)persist();});window.addEventListener('pagehide',()=>persist());
 function frame(wall){try{if(clock)clock.tick(wall);}catch(error){say(error.message);}if(wall-lastDraw>150){render();lastDraw=wall;}scene.animate(wall);if(wall-lastSave>15000){persist();lastSave=wall;}if(!$('notice').hidden&&wall>noticeUntil)$('notice').hidden=true;requestAnimationFrame(frame);}
 render(true);requestAnimationFrame(frame);
