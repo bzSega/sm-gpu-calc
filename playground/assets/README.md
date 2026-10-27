@@ -41,3 +41,12 @@ Generated with built-in image_gen on 2026-10-27; transparent background.
 ```text
 Use case: stylized-concept. Asset type: transparent game character sprite. Single friendly young adult customer sitting facing diagonally up-right at an invisible laptop desk, for a cozy isometric pixel art AI startup management game. Short dark brown hair, warm tan skin, muted blue shirt with rolled sleeves, dark trousers, small simple face, visible arms reaching forward to type. No laptop, no desk, no chair, no other props, no text. Approximately 30 degree down isometric view, crisp deliberately visible pixels, warm sunlight from upper left, detailed pixel shading consistent with cozy pixel game interiors. Full seated body centered, isolated transparent background, modest padding.
 ```
+
+## Answer sounds
+
+`answer-correct.wav` (0.46 s) and `answer-wrong.wav` (0.42 s) are locally
+synthesized original cues: mono PCM16 at 22,050 Hz. Success uses three rising
+sine notes (523.25 / 659.25 / 783.99 Hz) with a quiet second harmonic. The error
+cue uses two falling buzzer notes (220 / 155.56 Hz), built from the first four
+odd harmonics. Short attack/release envelopes prevent clicks; playback gain is
+limited. Sounds play only on an answer click and can be disabled in settings.

@@ -22,14 +22,17 @@ const StartupLessons=(()=>{
  };
  const flags=['gpuSeen','placed','reply','slotsSeen','slotsCleared','shortSeen','longSeen','memorySeen','memoryCleared','launchWorked'];
  function create(saved){
-  let data={schema:'ai-startup-lessons/1',enabled:true,index:0,answered:false,flags:Object.fromEntries(flags.map(k=>[k,false])),slotsCompleted:null,memoryCompleted:null,launch:null,shortKV:null,longKV:null};
+  let data={schema:'ai-startup-lessons/1',enabled:true,index:0,answered:false,attempts:[],lastAnswer:null,flags:Object.fromEntries(flags.map(k=>[k,false])),slotsCompleted:null,memoryCompleted:null,launch:null,shortKV:null,longKV:null};
   if(saved!==undefined){
    if(!saved||saved.schema!==data.schema||typeof saved.enabled!=='boolean'||!Number.isInteger(saved.index)||saved.index<0||saved.index>6||typeof saved.answered!=='boolean'||!saved.flags||flags.some(k=>k==='gpuSeen'?saved.flags[k]!==undefined&&typeof saved.flags[k]!=='boolean':typeof saved.flags[k]!=='boolean'))throw Error('Invalid learning save');
    for(const key of ['slotsCompleted','memoryCompleted','shortKV','longKV'])if(saved[key]!==null&&(!Number.isFinite(saved[key])||saved[key]<0))throw Error('Invalid learning evidence');
    if(saved.launch!==null&&(!saved.launch||!Number.isInteger(saved.launch.copy)||saved.launch.copy<1||saved.launch.copy>64||!Number.isInteger(saved.launch.limit)||saved.launch.limit<1||saved.launch.limit>256||!Number.isFinite(saved.launch.time)||saved.launch.time<0))throw Error('Invalid launch evidence');
-   data={schema:data.schema,enabled:saved.enabled,index:saved.index,answered:saved.answered,flags:Object.fromEntries(flags.map(k=>[k,!!saved.flags[k]])),...Object.fromEntries(['slotsCompleted','memoryCompleted','shortKV','longKV','launch'].map(k=>[k,clone(saved[k])]))};
+   const current=text.ru[saved.index],attempts=saved.attempts===undefined?(saved.answered&&current?[current.correct]:[]):saved.attempts,lastAnswer=saved.lastAnswer===undefined?(attempts.at(-1)??null):saved.lastAnswer;
+   if(!Array.isArray(attempts)||attempts.length>2||new Set(attempts).size!==attempts.length||attempts.some(i=>!Number.isInteger(i)||i<0||i>1)||
+     (lastAnswer===null?attempts.length>0:!attempts.includes(lastAnswer))||saved.index===6&&(attempts.length>0||saved.answered)||current&&(saved.answered?lastAnswer!==current.correct:attempts.includes(current.correct)))throw Error('Invalid answer feedback');
+   data={attempts:[...attempts],lastAnswer,schema:data.schema,enabled:saved.enabled,index:saved.index,answered:saved.answered,flags:Object.fromEntries(flags.map(k=>[k,!!saved.flags[k]])),...Object.fromEntries(['slotsCompleted','memoryCompleted','shortKV','longKV','launch'].map(k=>[k,clone(saved[k])]))};
   }
-  function ready(){return [data.flags.placed,data.flags.reply&&data.flags.gpuSeen,data.flags.slotsCleared,data.flags.shortSeen&&data.flags.longSeen,data.flags.memoryCleared,data.flags.launchWorked][data.index]||false;}
+  function ready(){if(data.answered)return true;return [data.flags.placed,data.flags.reply&&data.flags.gpuSeen,data.flags.slotsCleared,data.flags.shortSeen&&data.flags.longSeen,data.flags.memoryCleared,data.flags.launchWorked][data.index]||false;}
   const api={
    observe(state,records=[],event){
     if(state.model&&state.memory?.fits)data.flags.placed=true;
@@ -47,10 +50,10 @@ const StartupLessons=(()=>{
     }
     return api.inspect();
    },
-   inspect(){return {...clone(data),ready:ready(),done:data.index===6};},
+   inspect(){return {...clone(data),feedback:data.lastAnswer===null?null:{answer:data.lastAnswer,correct:data.lastAnswer===text.ru[data.index]?.correct},ready:ready(),done:data.index===6};},
    lesson(lang='ru'){return clone(text[lang]?.[data.index]||null);},
-   answer(index,lang='ru'){const lesson=api.lesson(lang);if(!lesson||!ready()||!Number.isInteger(index)||index<0||index>1)throw Error('Learning task not ready');const correct=index===lesson.correct;if(correct)data.answered=true;return {correct,explanation:lesson.explanation};},
-   next(){if(!data.answered||!ready())throw Error('Answer the current task first');data.index++;data.answered=false;return api.inspect();},
+   answer(index,lang='ru'){const lesson=api.lesson(lang);if(data.answered)throw Error('Answer already accepted');if(!lesson||!ready()||!Number.isInteger(index)||index<0||index>1)throw Error('Learning task not ready');const correct=index===lesson.correct;data.lastAnswer=index;if(!data.attempts.includes(index))data.attempts.push(index);if(correct)data.answered=true;return {correct,explanation:lesson.explanation};},
+   next(){if(!data.answered||!ready())throw Error('Answer the current task first');data.index++;data.answered=false;data.attempts=[];data.lastAnswer=null;return api.inspect();},
    setEnabled(value){if(typeof value!=='boolean')throw Error('Invalid learning mode');data.enabled=value;return api.inspect();},
    save(){return clone(data);}
   };return api;

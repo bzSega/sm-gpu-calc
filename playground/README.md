@@ -53,7 +53,10 @@ Six optional tasks observe the same service: place a model, send a reply,
 clear a queue despite free KV, compare request lengths, find a memory
 constraint, and change the launch limit. A task requires an observed outcome
 and a short explanation question. Wrong answers give an explanation without
-penalties. Buttons alone do not complete a task.
+penalties. Correct and incorrect choices use text, icons and color; a separate
+feedback card shows the explanation in both cases. Short answer sounds can be
+disabled in settings and never replay when restoring progress. Buttons alone
+do not complete a task.
 
 The memory experiment is derived from the selected model and shared memory
 checks. It is a teaching setup, not an optimal hardware recommendation.
