@@ -7,3 +7,8 @@
 .maintenance{padding:12px;background:#fff0cc;border-left:4px solid #bc964d;font-size:14px}[data-weights]{color:#9b482f}[data-reserve]{color:#616c42}[data-kvUsed]{color:#21765a}[data-free]{color:#48614d}.copy-list small{line-height:1.25;min-height:14px}.copy-list button{min-height:64px}
 
 #panel:has(.copy-list){padding:18px}.copy-list{gap:5px}.copy-list button{min-height:44px;padding:4px;gap:2px}.copy-list strong{font-size:13px}.copy-list small{min-height:0;font-size:11px;white-space:nowrap}#panel:has(.copy-list) header{margin-bottom:10px}#panel:has(.copy-list) [data-summary]{font-size:14px;margin-bottom:10px}@media(max-width:600px){.copy-list button{min-height:52px}.copy-list strong{font-size:12px}.copy-list small{font-size:10px}}
+
+#lesson-open{pointer-events:auto;margin-top:12px;min-height:38px;padding:7px 12px;font-size:13px}.lesson-question{margin:20px 0;padding:16px;background:#edf0df;border-radius:8px}.lesson-question button{display:block;width:100%;margin:8px 0}.lesson-question h3{line-height:1.5}#panel-body [data-lesson-status]{font-size:14px;color:#5c7053}
+
+.menu-card{top:90px;max-height:calc(100dvh - 110px);overflow-y:auto}@media(max-width:760px){.menu-card{top:80px;max-height:calc(100dvh - 100px)}}
+@media(max-width:600px){dialog>header{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px}dialog>header h2{font-size:20px;min-width:0}#close-panel{grid-column:2;grid-row:1}#panel-world{grid-column:1 / -1;grid-row:2;width:100%;max-width:none;margin:0}}

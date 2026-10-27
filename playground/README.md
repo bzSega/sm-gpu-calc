@@ -30,8 +30,11 @@ object stay intact; the setting never affects serving calculations.
   arrivals and processing. Morning/rush/night repeat; queued work is not reset.
 - Popularity controls new people per model minute in the morning. Rush hour is
   ×10; night is ×0.5. These are teaching assumptions, not measured traffic.
-- One person sends one request:10,000 input and1000 output tokens in this slice.
-  Each copy permits2 active calls with25% sharing gain. Solo rates are the
+- One person sends one request. Choose regular requests (10,000 input / 1,000
+  output tokens) or long documents (120,000 / 8,000). The choice affects only
+  future visitors. Existing calls keep their original tokens and KV.
+  Each copy initially permits 2 active calls with 25% sharing gain. Change the
+  limit through processing settings; the copy drains first. Solo rates are the
   existing model-profile assumptions; changing GPU memory does not derive a new
   hardware benchmark.
 - Up to 64 copies can accept waiting work independently. The compact overview
@@ -43,6 +46,21 @@ object stay intact; the setting never affects serving calculations.
 - Envelopes summarize actual arrival/completion changes. Their travel is visual
   feedback, not an extra processing stage. Reduced motion removes flying
   packets without stopping the model or hiding counts.
+
+## Learning tasks
+
+Six optional tasks observe the same service: place a model, send a reply,
+clear a queue despite free KV, compare request lengths, find a memory
+constraint, and change the launch limit. A task requires an observed outcome
+and a short explanation question. Wrong answers give an explanation without
+penalties. Buttons alone do not complete a task.
+
+The memory experiment is derived from the selected model and shared memory
+checks. It is a teaching setup, not an optimal hardware recommendation.
+Switch to sandbox at any time without resetting work or learning progress.
+Progress is local and included in JSON saves (`ai-startup-lessons/1`).
+Technical checks cover task transitions; usability with real beginners is
+still to be evaluated.
 
 ## Saving
 
@@ -68,6 +86,7 @@ history and offline progression are not implemented.
 | File | Purpose |
 | --- | --- |
 | index.html / game.css / app.js | Browser UI, contextual panels, local persistence |
+| lessons.js | Outcome checks, explanatory questions and local learning progress |
 | presentation.js | Pool geometry and validated saved object selection |
 | scene.js | Data-driven isometric SVG foreground over the generated environment |
 | startup.js | Empty-rack construction and placement validation |
