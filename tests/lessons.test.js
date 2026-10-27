@@ -44,3 +44,29 @@ test('already accepted legacy questions stay advanceable when a later evidence f
  const saved=L.create().save();saved.index=1;saved.answered=true;delete saved.attempts;delete saved.lastAnswer;delete saved.flags.gpuSeen;saved.flags.reply=true;
  const guide=L.create(saved);assert.equal(guide.inspect().ready,true);assert.deepEqual(guide.inspect().feedback,{answer:1,correct:true});guide.next();assert.equal(guide.inspect().index,2);
 });
+test('all lessons survive archived completions and saved progress in every world and language',()=>{
+ for(const world of ['server-room','workshop','orbital'])for(const lang of ['ru','en']){
+  let game=B.create({world}),guide=L.create();
+  const observe=event=>{const before=game.save();guide.observe(game.inspect(),game.records(),event);assert.deepEqual(game.save(),before);};
+  const pass=()=>{assert.equal(guide.inspect().ready,true,`${world}/${lang}/${guide.lesson(lang)?.id}`);assert.equal(guide.answer(guide.lesson(lang).correct,lang).correct,true);guide.next();};
+  const restore=()=>{const state=game.inspect(),lesson=guide.inspect();game=B.restore(JSON.parse(JSON.stringify(game.save())));guide=L.create(JSON.parse(JSON.stringify(guide.save())));assert.deepEqual(game.inspect(),state);assert.deepEqual(guide.inspect(),lesson);};
+  const bulkShortReplies=()=>{
+   const t=game.inspect().live.timeMs;game.setTaskProfile('short');game.setPopularity(60);game.advanceTo(t+620000);game.setPopularity(0);game.advanceTo(t+9000000);
+  };
+  game.install('H200',3);game.useModel('flash');observe();pass();game.open();
+  game.setPopularity(60);game.advanceTo(620000);observe({type:'gpu'});pass();
+  game.setPopularity(0);game.advanceTo(9000000);observe();pass();
+  assert.ok(game.inspect().live.completed>512);assert.ok(game.records().length<game.inspect().live.completed);
+  let t=game.inspect().live.timeMs;game.setTaskProfile('document');game.setPopularity(60);game.advanceTo(t+1000);game.setPopularity(0);game.advanceTo(t+200000);
+  // Do not observe the long reply yet: later short replies must not erase its
+  // actual completion evidence when its detailed row leaves recent history.
+  bulkShortReplies();assert.equal(game.save().live.engine.state.requests.some(r=>r.input_tokens===120000),false);
+  restore();observe();assert.ok(guide.inspect().longKV>guide.inspect().shortKV);pass();
+  game.setTaskProfile('document');t=game.inspect().live.timeMs;game.setPopularity(60);game.advanceTo(t+5000);observe();
+  assert.equal(game.inspect().live.waitingReason,'memory');assert.equal(guide.inspect().ready,false);
+  game.setPopularity(0);game.maintain(1,'H200',4);restore();game.advanceTo(t+1000000);observe();pass();
+  game.setTaskProfile('short');const before=game.inspect().copies[0].settings.concurrency;game.setConcurrency(1,4);observe({type:'launch',copy:1,before,limit:4});assert.equal(guide.inspect().ready,false);
+  bulkShortReplies();restore();observe();pass();assert.equal(guide.inspect().done,true);
+  assert.equal(game.inspect().world,world);assert.ok(game.inspect().live.completed>1000);
+ }
+});
