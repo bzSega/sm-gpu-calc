@@ -28,7 +28,7 @@ function closePanel(){detail=null;if($('panel').open)$('panel').close();}
 function panel(title,build,object=null){detail=object;$('panel-title').textContent=title;$('panel-world').value=game?.inspect().world||preferredWorld;$('panel-world').setAttribute('aria-label',t('world'));for(const option of $('panel-world').options)option.textContent=t(option.value==='server-room'?'server':option.value);$('panel-body').replaceChildren();build($('panel-body'));if(!$('panel').open)$('panel').showModal();}
 function row(label,value,parent){const d=el('div',null,parent,{class:'field'});el('span',label,d);el('strong',value,d);return d;}
 function action(fn){try{fn();render(true);}catch(error){say(error.message);}}
-const scene=StartupScene.create($('scene'),(kind,id)=>{if(menu)return;selected=id||selected;if(kind==='rack')rackPanel();if(kind==='models')modelsPanel();if(kind==='open')readyPanel();if(kind==='visitors')visitorsPanel();if(kind==='copies')copiesPanel();render(true);});
+const scene=StartupScene.create($('scene'),(kind,id)=>{if(menu)return;selected=id||selected;if(kind==='rack')rackPanel();if(kind==='models')modelsPanel();if(kind==='open')readyPanel();if(kind==='visitors')visitorsPanel();if(kind==='copies')copiesPanel();if(kind==='queue')whyPanel();render(true);});
 function installPanel(){
  const state=game.inspect();let gpu=state.hardware?.gpu||'H200',cards=state.hardware?.cards||8;
  panel(t('installTitle'),body=>{

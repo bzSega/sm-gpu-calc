@@ -12,9 +12,9 @@ const StartupScene=(()=>{
   const paths=el('g',{'aria-hidden':'true'}),actors=el('g',{'aria-hidden':'true','clip-path':'url(#startup-desk-occlusion)'}),rackLayer=el('g'),flightLayer=el('g',{'aria-hidden':'true','data-flow-effects':''});
   const inbound=el('path',{d:'M 290 430 L 510 570 L 720 490 L 880 410',fill:'none',stroke:'#cc9c4d','stroke-width':5,'stroke-dasharray':'10 12',opacity:.8},paths);
   const outbound=el('path',{d:'M 910 450 L 710 550 L 480 640 L 260 480',fill:'none',stroke:'#92cfaf','stroke-width':5,'stroke-dasharray':'10 12',opacity:.7},paths);
-  const queueGroup=el('g',{},paths);el('rect',{x:510,y:515,width:168,height:67,rx:6,fill:'#433e2c',stroke:'#c3a66b','stroke-width':3},queueGroup);
-  const queueLabel=el('text',{x:594,y:540,'text-anchor':'middle',fill:'#fff4d6','font-size':18,'font-family':'system-ui'},queueGroup);
-  const queueValue=el('text',{x:594,y:569,'text-anchor':'middle',fill:'#ffcf76','font-size':26,'font-family':'system-ui','font-weight':800},queueGroup);
+  const queueGroup=el('g',{class:'scene-queue',role:'button',tabindex:0,'aria-haspopup':'dialog'});const queueTitle=el('title',{},queueGroup);queueGroup.onclick=()=>onAction('queue');queueGroup.onkeydown=event=>{if(!event.repeat&&(event.key==='Enter'||event.key===' ')){event.preventDefault();onAction('queue');}};el('rect',{x:510,y:515,width:168,height:67,rx:6,fill:'#433e2c',stroke:'#c3a66b','stroke-width':3},queueGroup);
+  const queueLabel=el('text',{x:594,y:540,'text-anchor':'middle',fill:'#fff4d6','font-size':18,'font-family':'system-ui','data-queue-label':''},queueGroup);
+  const queueValue=el('text',{x:594,y:569,'text-anchor':'middle',fill:'#ffcf76','font-size':26,'font-family':'system-ui','font-weight':800,'data-queue-value':''},queueGroup);
   let key='',rackRefs=[],lastArrived=0,lastCompleted=0,flights=[];
   function button(x,y,width,label,action,parent=rackLayer){const f=el('foreignObject',{x,y,width,height:60},parent),b=document.createElementNS(XHTML,'button');b.setAttribute('class','world-button');b.textContent=label;b.onclick=action;f.append(b);return b;}
   function person(x,y,variant){
@@ -60,7 +60,7 @@ const StartupScene=(()=>{
      person(75,375,0);person(175,332,1);person(270,287,2);}
    }
    const phase=state.live?.calendar.phase||'morning';shade.setAttribute('opacity',phase==='night'?.36:phase==='peak'?.08:0);
-   paths.style.display=open?'':'none';queueLabel.textContent=lang==='ru'?'Очередь':'Queue';queueValue.textContent=state.live?.queued||0;
+   paths.style.display=open?'':'none';queueGroup.style.display=open?'':'none';queueLabel.textContent=lang==='ru'?'Очередь ↗':'Queue ↗';const queued=state.live?.queued||0;queueValue.textContent=queued;queueTitle.textContent=lang==='ru'?'Узнать причину ожидания':'Explain waiting requests';queueGroup.setAttribute('aria-label',lang==='ru'?`Очередь: ${queued}. Узнать причину ожидания`:`Queue: ${queued}. Explain waiting requests`);
    for(const r of rackRefs){
     const worker=state.live?.replicas.find(w=>w.id===r.id),memory=state.copies?.find(c=>c.id===r.id)?.memory||state.memory,total=memory?.total||1;
     let bottom=r.by+r.bh;
