@@ -53,3 +53,7 @@ test('replacing hardware unloads a model only when it no longer fits',()=>{
  const g=ready();g.install('B300',8);assert.equal(g.inspect().model,'flash');
  g.install('H200',1);assert.equal(g.inspect().model,null);assert.equal(g.inspect().stage,'hardware');
 });
+test('JSON object key order is irrelevant when validating a saved construction',()=>{
+ const g=ready();g.open();const d=g.save();d.live.settings=Object.fromEntries(Object.entries(d.live.settings).reverse());
+ d.live.profile=Object.fromEntries(Object.entries(d.live.profile).reverse());assert.deepEqual(B.restore(d).inspect(),g.inspect());
+});

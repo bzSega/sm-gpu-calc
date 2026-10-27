@@ -42,7 +42,8 @@ const StartupGame=(()=>{
       _restoreLive(saved){
         if(!model||!hardware)throw Error('Invalid open service');
         const candidate=G.restore(saved),expected=settings();
-        if(JSON.stringify(candidate.save().settings)!==JSON.stringify(expected)||JSON.stringify(candidate.inspect().profile)!==JSON.stringify(PROFILE)||candidate.inspect().world!==theme)throw Error('Game construction does not match session');
+        const actual=candidate.save().settings,profile=candidate.inspect().profile;
+        if(Object.keys(expected).some(k=>actual[k]!==expected[k])||Object.keys(PROFILE).some(k=>profile[k]!==PROFILE[k])||candidate.inspect().world!==theme)throw Error('Game construction does not match session');
         live=candidate;
       }
     };
