@@ -3,3 +3,7 @@
 [hidden]{display:none!important}
 
 #panel header{flex-wrap:wrap}#panel-world{max-width:145px;margin-left:auto;padding:8px}.copy-list{grid-template-columns:repeat(8,minmax(0,1fr))}.copy-list button{min-width:0;padding:9px 4px;display:grid;gap:5px}.copy-list small{font-size:11px}.copy-list button[aria-pressed=true]{outline:3px solid #65ad93}#panel:has(.copy-list){width:min(1000px,94vw)}@media(max-width:600px){.copy-list{grid-template-columns:repeat(4,minmax(0,1fr))}#panel-world{max-width:115px}}
+
+.maintenance{padding:12px;background:#fff0cc;border-left:4px solid #bc964d;font-size:14px}[data-weights]{color:#9b482f}[data-reserve]{color:#616c42}[data-kvUsed]{color:#21765a}[data-free]{color:#48614d}.copy-list small{line-height:1.25;min-height:14px}.copy-list button{min-height:64px}
+
+#panel:has(.copy-list){padding:18px}.copy-list{gap:5px}.copy-list button{min-height:44px;padding:4px;gap:2px}.copy-list strong{font-size:13px}.copy-list small{min-height:0;font-size:11px;white-space:nowrap}#panel:has(.copy-list) header{margin-bottom:10px}#panel:has(.copy-list) [data-summary]{font-size:14px;margin-bottom:10px}@media(max-width:600px){.copy-list button{min-height:52px}.copy-list strong{font-size:12px}.copy-list small{font-size:10px}}
