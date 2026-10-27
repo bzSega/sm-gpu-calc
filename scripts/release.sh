@@ -33,7 +33,7 @@ cp sitemap.xml distr/sitemap.xml
 cp simulation.html distr/index.html
 
 echo 'Core tests'
-node --test --test-reporter=tap tests/sim-core.test.js
+node --test --test-reporter=tap tests/*.test.js
 
 echo 'Render checks'
 for page in index.html simulation.html; do

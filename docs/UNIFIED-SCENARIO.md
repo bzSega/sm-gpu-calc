@@ -235,3 +235,12 @@ JSON сохраняет полный workload_source и фактический w
 Старый openclaw-live/1 читает исходный полный трейс. URL: users, tasksPerUser,
 periodHours, profile, windowMinutes, hourWeights (24 числа через запятую).
 usersPerSecond совместим: без periodHours период = users / usersPerSecond / 3600.
+
+## Экспериментальная непрерывная сессия
+
+В исходном SimCore добавлены createSession/restoreSession; конечный simulate
+использует тот же событийный движок. Формулы FIFO/sharing/KV не менялись.
+Наблюдение не дробит интеграционные шаги: частота кадров не меняет расписание.
+API обслуживания копии, сохранения, границы прототипа и проверка совместимости:
+[LIVE-SESSION.md](LIVE-SESSION.md). Контроллер игры находится в playground/session.js.
+Это локальная экспериментальная ветка; поставка distr и сайт пока не обновлены.

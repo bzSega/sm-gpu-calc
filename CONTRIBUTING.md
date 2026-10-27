@@ -17,13 +17,15 @@ and assumptions; include meaningful semantic tests.
 - Replica detail opens within the same scenario and shares playback state.
 - Update the UI through its central `update()` and keep calculations in the core.
 - Profiles and throughput curves are educational assumptions unless calibrated.
+- Incremental sessions share the finite event engine; see [experimental live API](docs/LIVE-SESSION.md).
+  Game/controller changes stay in `playground/`; do not add them to the calculator release allowlist.
 
 See [the calculation and visual contract](docs/UNIFIED-SCENARIO.md) (Russian).
 
 ## Validation
 
 ```sh
-node --test tests/sim-core.test.js
+node --test tests/*.test.js
 bash scripts/render-check.sh simulation.html '?lang=en' /tmp/overview-en.png
 bash scripts/render-check.sh simulation.html '?lang=ru&drill=1' /tmp/rack-ru.png
 ```
