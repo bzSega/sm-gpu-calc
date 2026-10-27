@@ -81,3 +81,53 @@ test('legacy saves without applied metadata restore idle and initial draining co
 test('applied hardware metadata cannot be forged independently of active work',()=>{
  const g=G.create({settings,popularity:0});const saved=save(g);saved.appliedSettingsByReplica[0].gpu='B300';assert.throws(()=>G.restore(saved),/Applied model/);
 });
+test('task profile changes only future people and round-trips mixed request lengths',()=>{
+ const g=G.create({settings,popularity:60,profile:{kind:'single',inputTokens:1000,outputTokens:100}});
+ g.advanceTo(2500);const before=g.records();g.setProfile({kind:'single',inputTokens:120000,outputTokens:8000});g.advanceTo(3500);
+ for(const r of before){const after=g.records().find(x=>x.request_id===r.request_id);assert.equal(after.input_tokens,r.input_tokens);assert.equal(after.startMs,r.startMs);}
+ const rows=g.save().engine.actions.filter(a=>a.type==='enqueue').flatMap(a=>a.rows);assert.deepEqual(rows.map(r=>r.input_tokens),[1000,1000,120000]);
+ const restored=G.restore(save(g));assert.deepEqual(restored.inspect(),g.inspect());g.advanceTo(8500);restored.advanceTo(8500);assert.deepEqual(restored.inspect(),g.inspect());assert.deepEqual(restored.records(),g.records());
+});
+test('switching profiles preserves fractional arrival credit and cannot change pending OpenClaw calls',()=>{
+ const g=G.create({settings,popularity:60,profile:{kind:'openclaw'}});g.advanceTo(1500);g.setProfile({kind:'single',inputTokens:1000,outputTokens:100});g.advanceTo(2000);
+ assert.equal(g.inspect().users,2);assert.equal(g.inspect().requestsGenerated,7);assert.deepEqual(G.restore(save(g)).inspect(),g.inspect());
+});
+test('invalid future profile is atomic and targets both current and maintenance hardware',()=>{
+ const g=G.create({settings:{...settings,cards:3},popularity:60});g.advanceTo(1200);const before=save(g);
+ assert.throws(()=>g.setProfile({kind:'single',inputTokens:200000,outputTokens:1000}));assert.deepEqual(save(g),before);
+});
+test('shrinking hardware must still fit long queued requests after reverting to short tasks',()=>{
+ const g=G.create({settings:{...settings,gpu:'B300',cards:3,concurrency:1},popularity:60,profile:{kind:'single',inputTokens:120000,outputTokens:8000}});
+ g.advanceTo(3000);assert.ok(g.inspect().queued>0);g.setProfile({kind:'single',inputTokens:1000,outputTokens:100});g.setPopularity(0);
+ const before=save(g);assert.throws(()=>g.maintain(1,{...settings,gpu:'B200',cards:2,concurrency:1}),/Outstanding/);assert.deepEqual(save(g),before);
+ g.advanceTo(1000000);g.maintain(1,{...settings,gpu:'B200',cards:2,concurrency:1});assert.ok(Math.abs(g.inspect().replicas[0].config.kvCapacityGB-25.6)<1e-9);
+ assert.deepEqual(G.restore(save(g)).inspect(),g.inspect());
+});
+test('profile history and mixed task tokens are validated on load',()=>{
+ const g=G.create({settings,popularity:60});g.advanceTo(1000);g.setProfile({kind:'single',inputTokens:120000,outputTokens:8000});g.advanceTo(2000);
+ const d=save(g);d.profileChanges[1].afterUsers=0;assert.throws(()=>G.restore(d));
+ const f=save(g);f.profileChanges[1].profile.inputTokens=119000;assert.throws(()=>G.restore(f));
+ const h=save(g);h.profileChanges[1].atMs=2001;assert.throws(()=>G.restore(h));
+});
+test('queued long requests are protected even when the only active request is short',()=>{
+ const g=G.create({settings:{...settings,gpu:'B300',cards:3,concurrency:1,decode:.01},popularity:60,profile:{kind:'single',inputTokens:1000,outputTokens:100}});
+ g.advanceTo(1000);g.setProfile({kind:'single',inputTokens:120000,outputTokens:8000});g.advanceTo(2000);g.setProfile({kind:'single',inputTokens:1000,outputTokens:100});
+ assert.equal(g.inspect().active[0].input_tokens,1000);assert.equal(g.inspect().queued,1);const before=save(g);
+ assert.equal(g.previewPlacement({...settings,gpu:'B200',cards:2,concurrency:1}).fits,false);
+ assert.throws(()=>g.maintain(1,{...settings,gpu:'B200',cards:2,concurrency:1}),/Outstanding/);assert.deepEqual(save(g),before);
+});
+test('profile fields added for lessons remain compatible with old fixed-profile files',()=>{
+ const g=G.create({settings,popularity:60});g.advanceTo(2000);const d=save(g);delete d.initialProfile;delete d.profileChanges;assert.deepEqual(G.restore(d).inspect(),g.inspect());
+});
+test('mixed-profile arrivals are independent of render frequency on both sides of a change',()=>{
+ const opts={settings,popularity:37,profile:{kind:'single',inputTokens:1000,outputTokens:100}},a=G.create(opts),b=G.create(opts);
+ a.advanceTo(3711);for(let t=0;t<3711;t+=117)b.advanceTo(t);b.advanceTo(3711);
+ for(const game of [a,b])game.setProfile({kind:'single',inputTokens:120000,outputTokens:8000});
+ a.advanceTo(19523);for(let t=3800;t<19523;t+=113)b.advanceTo(t);b.advanceTo(19523);
+ assert.deepEqual(a.inspect(),b.inspect());assert.deepEqual(a.records(),b.records());assert.deepEqual(G.restore(save(a)).inspect(),b.inspect());
+});
+test('future tasks must fit pending hardware as well as the currently draining copy',()=>{
+ const base={...settings,model:'qwenflash',gpu:'H200',cards:2,concurrency:1,decode:.01};const g=G.create({settings:base,popularity:60,profile:{kind:'single',inputTokens:1000,outputTokens:100}});
+ g.advanceTo(1000);g.maintain(1,{...base,cards:1});assert.equal(g.inspect().replicas[0].maintenance,true);const before=save(g);
+ assert.throws(()=>g.setProfile({kind:'single',inputTokens:10000,outputTokens:1000}),/fit/);assert.deepEqual(save(g),before);
+});

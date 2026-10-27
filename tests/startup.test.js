@@ -74,3 +74,25 @@ test('copying selected upgraded hardware and switching worlds preserves serving 
 test('bad live placement cannot mutate working hardware or waiting work',()=>{
  const g=ready();g.open();g.advanceTo(35000);const before=g.save();assert.throws(()=>g.maintain(1,'H200',1));assert.deepEqual(g.save(),before);
 });
+test('live game task changes preserve old requests and restore the mixed profile history',()=>{
+ const g=ready();g.open();g.setPopularity(60);g.advanceTo(1500);const first=g.inspect().live.active[0];g.setTaskProfile('document');g.advanceTo(2500);
+ assert.equal(g.inspect().taskProfile,'document');assert.equal(g.inspect().live.active.find(r=>r.request_id===first.request_id).input_tokens,10000);
+ assert.equal(g.inspect().copies[0].memory.context,128000);assert.deepEqual(B.restore(JSON.parse(JSON.stringify(g.save()))).inspect(),g.inspect());
+ g.setConcurrency(1,4);assert.ok(g.inspect().copies[0].pendingSettings||g.inspect().copies[0].worker.config.concurrency===4);
+ assert.deepEqual(B.restore(JSON.parse(JSON.stringify(g.save()))).inspect(),g.inspect());
+});
+test('document profile exposes a real memory bottleneck instead of a fake lesson flag',()=>{
+ const g=B.create();g.install('H200',3);g.useModel('flash');g.open();g.setTaskProfile('document');g.setPopularity(60);g.advanceTo(3000);
+ const s=g.inspect();assert.equal(s.live.waitingReason,'memory');assert.equal(s.live.replicas[0].active,1);assert.equal(s.live.replicas[0].config.concurrency,2);assert.ok(s.live.queued>0);assert.equal(s.copies[0].memory.memorySlots,1);
+});
+test('copy hardware preview protects outstanding long tasks even after switching back',()=>{
+ const g=ready();g.open();g.setTaskProfile('document');g.setPopularity(60);g.advanceTo(3000);g.setTaskProfile('short');
+ assert.equal(g.previewCopy(1,'B200',2).fits,false);const before=g.save();assert.throws(()=>g.maintain(1,'B200',2));assert.deepEqual(g.save(),before);
+});
+test('the memory lesson has a feasible experiment for every selectable model',()=>{
+ for(const model of ['flash','glm53','qwenflash']){
+  const g=B.create();g.install('H200',8);g.useModel(model);g.open();const setup=g.memoryExperiment();assert.ok(setup,model);
+  g.maintain(1,setup.gpu,setup.cards);g.setConcurrency(1,setup.concurrency);g.setTaskProfile('document');g.setPopularity(60);g.advanceTo(6000);
+  assert.equal(g.inspect().live.waitingReason,'memory',model);assert.ok(g.inspect().live.replicas[0].active<setup.concurrency);assert.deepEqual(B.restore(JSON.parse(JSON.stringify(g.save()))).inspect(),g.inspect());
+ }
+});

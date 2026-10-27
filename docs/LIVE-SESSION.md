@@ -102,3 +102,16 @@ OpenClaw future calls, save/restore and explicit quota failures.
 Game session inspection exposes target `settingsByReplica` and actual
 `appliedSettingsByReplica`. During maintenance, actual hardware and memory
 stay unchanged until active work drains. Saves validate both against core state.
+
+## Live task changes
+
+`GameSession.setProfile(profile)` changes only future visitors. Accepted calls,
+including future OpenClaw calls and queued requests, retain their tokens.
+`initialProfile` and `profileChanges` extend session saves without changing the
+schema version; old fixed-profile files remain readable. Restore validates each
+visitor against the profile in effect when that visitor was generated.
+
+`previewPlacement(settings)` checks both the future task and all unfinished
+accepted calls. Shrinking hardware cannot strand queued long requests after
+switching back to a short task. This conservative game rule requires every copy
+to fit one such request; it does not model specialized routing.
