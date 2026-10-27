@@ -73,3 +73,11 @@ test('restoring a save cannot mislabel serving configuration with forged GPU met
  const s=G.create({settings,popularity:0});const d=save(s);d.settingsByReplica[0].gpu='B300';
  assert.throws(()=>G.restore(d),/metadata/);
 });
+test('legacy saves without applied metadata restore idle and initial draining configurations',()=>{
+ const g=G.create({settings,popularity:60});g.advanceTo(1100);g.maintain(1,{...settings,gpu:'B300',cards:4});
+ const before=g.inspect();const saved=save(g);delete saved.appliedSettingsByReplica;
+ assert.deepEqual(G.restore(saved).inspect(),before);
+});
+test('applied hardware metadata cannot be forged independently of active work',()=>{
+ const g=G.create({settings,popularity:0});const saved=save(g);saved.appliedSettingsByReplica[0].gpu='B300';assert.throws(()=>G.restore(saved),/Applied model/);
+});

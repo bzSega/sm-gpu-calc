@@ -12,4 +12,7 @@ Use case: ui-mockup / game background asset. Create a wide landscape isometric P
 ```
 
 `worlds-concept.png` is the earlier concept comparison of the three settings.
-The other two environments are previews, not playable skins in this slice.
+`workshop.png` and `orbital.png` were generated on 2026-10-27 as edits of
+`server-room.png`, preserving the camera, floor pads and reception layout.
+The workshop uses wood benches and tool boards; the orbital station uses
+cream hull panels and an Earth window. All three environments share live gameplay.

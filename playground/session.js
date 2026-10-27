@@ -36,6 +36,9 @@ const GameSession=(()=>{
     let engine=C.createSession(S.config(settings)),source={anchor:0,credit:0,users:0,requests:0};
     let base=popularity,theme=world;const initialSettings=clone(settings),p=clone(profile);
     const settingsByReplica=Array.from({length:settings.replicas},()=>clone(settings));
+    const appliedSettingsByReplica=Array.from({length:settings.replicas},()=>clone(settings));
+    function matches(s,config){const c=S.config(s);return Object.keys(c).filter(k=>k!=='replicas').every(k=>c[k]===config[k]);}
+    function syncApplied(){for(const w of engine.inspect().replicas)if(!w.maintenance)appliedSettingsByReplica[w.id-1]=settingsByReplica[w.id-1];}
     const intensity=t=>base*MULTIPLIERS[calendar(t).phase];
     const now=()=>engine.inspect().timeMs;
     const api={
@@ -67,17 +70,17 @@ const GameSession=(()=>{
       setWorld(value){if(!WORLDS.includes(value))throw Error('Unknown world');theme=value;return api.inspect();},
       maintain(replicaId,newSettings){
         validatePlacement(newSettings,p);engine.maintain(replicaId,S.config(newSettings));
-        settingsByReplica[replicaId-1]=clone(newSettings);return api.inspect();
+        settingsByReplica[replicaId-1]=clone(newSettings);syncApplied();return api.inspect();
       },
       addCopy(newSettings=initialSettings){
-        validatePlacement(newSettings,p);engine.addReplica(S.config(newSettings));settingsByReplica.push(clone(newSettings));return api.inspect();
+        validatePlacement(newSettings,p);engine.addReplica(S.config(newSettings));settingsByReplica.push(clone(newSettings));appliedSettingsByReplica.push(clone(newSettings));return api.inspect();
       },
-      inspect(){const state=engine.inspect();return {...state,calendar:calendar(state.timeMs),world:theme,
+      inspect(){syncApplied();const state=engine.inspect();return {...state,calendar:calendar(state.timeMs),world:theme,
         users:source.users,requestsGenerated:source.requests,popularity:base,usersPerMinute:intensity(state.timeMs),
-        profile:clone(p),settingsByReplica:clone(settingsByReplica)};},
+        profile:clone(p),settingsByReplica:clone(settingsByReplica),appliedSettingsByReplica:clone(appliedSettingsByReplica)};},
       records(){return engine.records();},
-      save(){return {schema:'ai-startup-session/1',settings:clone(initialSettings),profile:clone(p),popularity:base,world:theme,
-        source:{...source},settingsByReplica:clone(settingsByReplica),engine:engine.save()};},
+      save(){syncApplied();return {schema:'ai-startup-session/1',settings:clone(initialSettings),profile:clone(p),popularity:base,world:theme,
+        source:{...source},settingsByReplica:clone(settingsByReplica),appliedSettingsByReplica:clone(appliedSettingsByReplica),engine:engine.save()};},
       // Used only by restore after validating and replaying the serving journal.
       _restore(saved){
         const restored=C.restoreSession(saved.engine),t=restored.inspect().timeMs,x=saved.source;
@@ -96,6 +99,11 @@ const GameSession=(()=>{
           validatePlacement(s,p);const actual=restored.inspect().replicas[i],expected=S.config(s),target=actual.pendingConfig||actual.config;
           if(Object.keys(expected).filter(k=>k!=='replicas').some(k=>expected[k]!==target[k]))throw Error('Model metadata does not match serving config');
         }
+        const actualWorkers=restored.inspect().replicas;
+        const applied=saved.appliedSettingsByReplica||actualWorkers.map((w,i)=>!w.maintenance?saved.settingsByReplica[i]:matches(initialSettings,w.config)?initialSettings:null);
+        if(!Array.isArray(applied)||applied.length!==actualWorkers.length)throw Error('Invalid applied model metadata');
+        for(const [i,s] of applied.entries()){if(!s)throw Error('Legacy maintenance metadata unavailable');validatePlacement(s,p);if(!matches(s,actualWorkers[i].config))throw Error('Applied model metadata does not match serving config');}
+        appliedSettingsByReplica.splice(0,appliedSettingsByReplica.length,...clone(applied));
         // Source anchor is the latest generation boundary/action. It cannot
         // precede a phase boundary already observed by the session.
         if(nextBoundary(x.anchor)<=t)throw Error('Invalid source phase');

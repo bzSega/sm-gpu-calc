@@ -4,7 +4,7 @@ const StartupScene=(()=>{
  const NS='http://www.w3.org/2000/svg',XHTML='http://www.w3.org/1999/xhtml';
  function create(svg,onAction){
   function el(tag,attrs={},parent=svg,text){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;parent.append(e);return e;}
-  el('image',{href:'assets/server-room.png',width:1586,height:992});
+  const backdrop=el('image',{href:'assets/server-room.png',width:1586,height:992});
   const shade=el('rect',{width:1586,height:992,fill:'#182a4c',opacity:0,'pointer-events':'none'});
   const paths=el('g',{'aria-hidden':'true'}),actors=el('g',{'aria-hidden':'true'}),rackLayer=el('g'),flightLayer=el('g',{'aria-hidden':'true'});
   const inbound=el('path',{d:'M 290 430 L 510 570 L 720 490 L 880 410',fill:'none',stroke:'#cc9c4d','stroke-width':5,'stroke-dasharray':'10 12',opacity:.8},paths);
@@ -17,7 +17,7 @@ const StartupScene=(()=>{
   function person(x,y,shirt){const g=el('g',{transform:`translate(${x} ${y})`},actors);el('ellipse',{cx:8,cy:47,rx:22,ry:8,fill:'#344c4440'},g);el('rect',{x:-4,y:5,width:26,height:23,fill:'#e6b98b'},g);el('path',{d:'M -6 12 V 0 H 23 V 12 H 15 V 7 H 4 V 12 Z',fill:'#3e322b'},g);el('path',{d:'M -6 28 H 25 V 48 H 17 V 60 H 6 V 48 H -6 Z',fill:shirt},g);el('rect',{x:13,y:16,width:3,height:3,fill:'#243a32'},g);}
   function envelope(parent,x=0,y=0,color='#efbd65'){const g=el('g',{transform:`translate(${x} ${y})`},parent);el('rect',{x:-13,y:-9,width:26,height:18,fill:color,stroke:'#624e31','stroke-width':2},g);el('path',{d:'M -12 -8 L 0 1 L 12 -8',fill:'none',stroke:'#624e31','stroke-width':2},g);return g;}
   function rack(x,y,id,state,label,selected){
-   const g=el('g',{'data-copy':id},rackLayer),hardware=state.hardware,front='#384c40',side='#243a31';
+   const g=el('g',{'data-copy':id},rackLayer),hardware=(state.copies?.find(c=>c.id===id)?.hardware||state.hardware),front='#384c40',side='#243a31';
    el('polygon',{points:`${x},${y} ${x+48},${y-28} ${x+186},${y-28} ${x+138},${y}`,fill:'#b3bba4',stroke:'#52644e','stroke-width':3},g);
    el('polygon',{points:`${x+138},${y} ${x+186},${y-28} ${x+186},${y+240} ${x+138},${y+268}`,fill:side,stroke:'#52644e','stroke-width':3},g);
    el('rect',{x,y,width:138,height:268,rx:5,fill:front,stroke:selected?'#ffe19a':'#9da88c','stroke-width':selected?5:3},g);
@@ -32,16 +32,18 @@ const StartupScene=(()=>{
    const weight=el('rect',{x:bx,width:10,fill:'#fa9578'},strip),reserve=el('rect',{x:bx,width:10,fill:'#92997a'},strip),kv=el('rect',{x:bx,width:10,fill:'#88d3b6'},strip);
    const lamp=el('rect',{x:x+13,y:y+243,width:11,height:8,fill:'#adb39a'},g);
    const info=el('text',{x:x+31,y:y+251,fill:'#f6efda','font-size':13,'font-family':'system-ui'},g);
-   button(x-16,y+285,205,label,()=>onAction('rack',id));
-   rackRefs.push({id,weight,reserve,kv,lamp,info,by,bh});
+   button(x-16,y+285,205,label,()=>onAction('rack',id),g);
+   rackRefs.push({id,weight,reserve,kv,lamp,info,by,bh});return g;
   }
   function render(state,{lang='ru',selected=1,reduced=false}={}){
    const open=!!state.live,copies=state.live?.replicas.length||1;
-   const signature=[state.stage,state.hardware?.gpu,state.hardware?.cards,state.model,copies,selected,lang].join('|');
+   backdrop.setAttribute('href',`assets/${state.world||'server-room'}.png`);
+   const signature=[state.world,JSON.stringify(state.copies?.map(c=>c.hardware)),state.stage,state.hardware?.gpu,state.hardware?.cards,state.model,copies,selected,lang].join('|');
    if(key!==signature){
     key=signature;rackLayer.replaceChildren();actors.replaceChildren();rackRefs=[];if(state.stage==='empty'){flights.forEach(f=>f.node.remove());flights=[];}
-    const ids=copies<=3?Array.from({length:copies},(_,i)=>i+1):[1,2,Math.max(3,selected)];
-    ids.forEach((id,i)=>rack([840,1100,1350][i],[205,345,480][i],id,state,!state.hardware?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${id} · ${state.hardware.cards} GPU`,selected===id));
+    if(copies<=3){for(let i=0;i<copies;i++){const id=i+1,hw=state.copies?.find(c=>c.id===id)?.hardware||state.hardware;rack([840,1100,1350][i],[205,345,480][i],id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${id} · ${hw.cards} GPU`,selected===id);}}
+    else{const cols=copies<=16?4:8,scale=copies<=16?.55:.32;for(let i=0;i<copies;i++){const id=i+1,g=rack(0,0,id,state,String(id),selected===id);g.setAttribute('transform',`translate(${760+(i%cols)*(cols===4?180:92)} ${180+Math.floor(i/cols)*(cols===4?190:94)}) scale(${scale})`);}}
+
     if(state.hardware&&!open)button(270,350,260,state.model?(lang==='ru'?'Открыть сервис':'Open service'):(lang==='ru'?'Выбрать модель':'Choose model'),()=>onAction(state.model?'open':'models'));
     if(open){button(175,520,230,lang==='ru'?'Поток людей':'Visitors',()=>onAction('visitors'));button(800,660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));
      person(172,400,'#718c99');person(260,450,'#a69166');person(350,485,'#648775');}
@@ -49,7 +51,7 @@ const StartupScene=(()=>{
    const phase=state.live?.calendar.phase||'morning';shade.setAttribute('opacity',phase==='night'?.36:phase==='peak'?.08:0);
    paths.style.display=open?'':'none';queueLabel.textContent=lang==='ru'?'Очередь':'Queue';queueValue.textContent=state.live?.queued||0;
    for(const r of rackRefs){
-    const worker=state.live?.replicas.find(w=>w.id===r.id),memory=state.memory,total=memory?.total||1;
+    const worker=state.live?.replicas.find(w=>w.id===r.id),memory=state.copies?.find(c=>c.id===r.id)?.memory||state.memory,total=memory?.total||1;
     let bottom=r.by+r.bh;
     for(const [node,amount] of [[r.weight,memory?.weightsGB||0],[r.reserve,memory?.reservedGB||0],[r.kv,worker?.kvUsedGB||0]]){
      const height=Math.max(0,r.bh*amount/total);bottom-=height;node.setAttribute('y',bottom);node.setAttribute('height',height);

@@ -34,10 +34,14 @@ const StartupGame=(()=>{
       },
       advanceTo(t){if(!live)throw Error('Service is closed');live.advanceTo(t);return api.inspect();},
       setPopularity(value){if(!live)throw Error('Service is closed');live.setPopularity(value);return api.inspect();},
-      addCopy(){if(!live)throw Error('Service is closed');live.addCopy(settings());return api.inspect();},
+      addCopy(copyId=1){if(!live)throw Error('Service is closed');const from=api.inspect().copies.find(c=>c.id===copyId);if(!from)throw Error('Unknown copy');live.addCopy(from.settings);return api.inspect();},
+      previewCopy(copyId,gpu,cards){const c=api.inspect().copies.find(c=>c.id===copyId);if(!c||!Object.hasOwn(S.gpus,gpu)||!Number.isInteger(cards)||cards<1||cards>16)throw Error('Invalid copy placement');return S.memory(SAMPLE,{...c.settings,gpu,cards,price:S.gpus[gpu].price});},
+      maintain(copyId,gpu,cards){if(!live)throw Error('Service is closed');const c=api.inspect().copies.find(c=>c.id===copyId);const memory=api.previewCopy(copyId,gpu,cards);if(!memory.fits)throw Error('Model and request do not fit');live.maintain(copyId,{...c.settings,gpu,cards,price:S.gpus[gpu].price});return api.inspect();},
       setWorld(value){if(!G.WORLDS.includes(value))throw Error('Unknown world');theme=value;if(live)live.setWorld(value);return api.inspect();},
-      inspect(){return {stage:live?'open':model?'ready':hardware?'hardware':'empty',world:theme,hardware:hardware?{...hardware}:null,
-        model,settings:model?settings():null,memory:model?api.preview(model):null,live:live?live.inspect():null};},
+      inspect(){const state=live?live.inspect():null;
+        const copies=state?state.replicas.map((worker,i)=>{const current=state.appliedSettingsByReplica[i];return {id:worker.id,settings:clone(current),hardware:{gpu:current.gpu,cards:current.cards},model:current.model,memory:S.memory(SAMPLE,current),worker,pendingSettings:worker.maintenance?clone(state.settingsByReplica[i]):null};}):[];
+        return {stage:live?'open':model?'ready':hardware?'hardware':'empty',world:theme,hardware:hardware?{...hardware}:null,
+        model,settings:model?settings():null,memory:model?api.preview(model):null,live:state,copies};},
       save(){return {schema:'ai-startup-game/1',world:theme,hardware:hardware?{...hardware}:null,model,live:live?live.save():null};},
       _restoreLive(saved){
         if(!model||!hardware)throw Error('Invalid open service');

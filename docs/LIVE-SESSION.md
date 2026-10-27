@@ -98,3 +98,7 @@ node --test tests/*.test.js
 `live-core.test.js`: observation invariance, restore, maintenance, KV and costs.
 `game-session.test.js`: repeated phases, arrival changes, theme invariance,
 OpenClaw future calls, save/restore and explicit quota failures.
+
+Game session inspection exposes target `settingsByReplica` and actual
+`appliedSettingsByReplica`. During maintenance, actual hardware and memory
+stay unchanged until active work drains. Saves validate both against core state.

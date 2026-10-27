@@ -57,3 +57,20 @@ test('JSON object key order is irrelevant when validating a saved construction',
  const g=ready();g.open();const d=g.save();d.live.settings=Object.fromEntries(Object.entries(d.live.settings).reverse());
  d.live.profile=Object.fromEntries(Object.entries(d.live.profile).reverse());assert.deepEqual(B.restore(d).inspect(),g.inspect());
 });
+test('maintenance keeps old GPU placement until active work drains, including after restore',()=>{
+ const g=ready();g.open();g.advanceTo(35000);assert.ok(g.inspect().copies[0].worker.active>0);
+ g.maintain(1,'B300',4);const before=g.inspect().copies[0];assert.equal(before.hardware.gpu,'H200');assert.equal(before.hardware.cards,8);
+ assert.equal(before.pendingSettings.gpu,'B300');assert.equal(before.memory.total,1128);
+ const restored=B.restore(JSON.parse(JSON.stringify(g.save())));assert.deepEqual(restored.inspect(),g.inspect());
+ for(const game of [g,restored])game.advanceTo(50000);
+ assert.deepEqual(restored.inspect(),g.inspect());const after=g.inspect().copies[0];assert.equal(after.hardware.gpu,'B300');assert.equal(after.hardware.cards,4);assert.equal(after.memory.total,1152);assert.equal(after.pendingSettings,null);
+});
+test('copying selected upgraded hardware and switching worlds preserves serving work',()=>{
+ const g=ready();g.open();g.advanceTo(35000);g.maintain(1,'B300',4);g.advanceTo(50000);g.addCopy(1);g.advanceTo(61000);
+ const before=g.inspect();for(const w of ['workshop','orbital','server-room'])g.setWorld(w);
+ assert.deepEqual(g.inspect(),before);assert.equal(g.inspect().copies[1].hardware.gpu,'B300');
+ assert.deepEqual(B.restore(JSON.parse(JSON.stringify(g.save()))).inspect(),g.inspect());
+});
+test('bad live placement cannot mutate working hardware or waiting work',()=>{
+ const g=ready();g.open();g.advanceTo(35000);const before=g.save();assert.throws(()=>g.maintain(1,'H200',1));assert.deepEqual(g.save(),before);
+});
