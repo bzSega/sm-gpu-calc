@@ -21,3 +21,7 @@ dialog[open]{display:flex;flex-direction:column;overflow:hidden}dialog>header{po
 #fullscreen-toggle{display:flex;align-items:center;gap:7px}#fullscreen-toggle>span:first-child{font-size:22px;line-height:1}html:fullscreen #game{height:100dvh;min-height:0}.live-summary{max-width:calc(100% - 450px)}@media(max-width:760px){.fullscreen-label{display:none}#fullscreen-toggle{padding:6px 10px}.live-summary{max-width:none}}
 
 #rps-button small{font-size:10px;line-height:1.2;color:inherit;font-weight:500}#rps-button{padding:6px 12px}
+
+#clock-info{display:grid;grid-template-columns:auto auto;gap:2px 10px;text-align:left;font-weight:400;box-shadow:none}#clock-scale{grid-column:1/-1;font-size:10px;line-height:1.2;color:#596d59}#clock-info strong{font-weight:750}@media(max-width:760px){#clock-info{padding:7px 9px;gap:2px 6px}#clock-info strong{font-size:12px}#clock-info #phase{font-size:11px}.live-summary{top:92px}}
+
+#arrivals small{font-size:10px;line-height:1.2;color:inherit}

@@ -30,8 +30,12 @@ object stay intact; the setting never affects serving calculations.
   a user gesture.
 - The service runs continuously, including while in-game menus are open. There
   are no play/pause, speed or timeline controls.
+- The clock shows “One day in6minutes” and opens a concrete time explanation
+  on click: one screen second represents four service minutes.
 - A day takes six real minutes. The **same fixed scale** applies to clock,
   arrivals and processing. Morning/rush/night repeat; queued work is not reset.
+- The RPS counter is explicitly labeled “Whole service”; its help separates
+  service, copy and shared GPU work using a marked hypothetical4=3+1example.
 - Incoming RPS counts actual arrivals in the last60 game seconds and divides
   by60, including queued requests. Click the counter for its formula. It is
   traffic to the whole service, not hardware utilization or maximum throughput;
@@ -40,6 +44,8 @@ object stay intact; the setting never affects serving calculations.
   minute before displaying a value; old journals can recover the exact window.
 - Popularity controls new people per model minute in the morning. Rush hour is
   ×10; night is ×0.5. These are teaching assumptions, not measured traffic.
+- Visitor settings explicitly show “1user → 1request”, with a10user/10request
+  example for this teaching scenario.
 - One person sends one request. Choose regular requests (10,000 input / 1,000
   output tokens) or long documents (120,000 / 8,000). The choice affects only
   future visitors. Existing calls keep their original tokens and KV.
