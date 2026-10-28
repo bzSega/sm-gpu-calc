@@ -56,7 +56,7 @@ const StartupScene=(()=>{
     for(const item of StartupPresentation.layout(copies)){const hw=state.copies?.find(c=>c.id===item.id)?.hardware||state.hardware,g=rack(0,0,item.id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${item.id} · ${hw.cards} GPU`,selected===item.id);g.setAttribute('transform',`translate(${item.x} ${item.y}) scale(${item.scale})`);}
 
     if(state.hardware&&!open)button(270,350,260,state.model?(lang==='ru'?'Открыть сервис':'Open service'):(lang==='ru'?'Выбрать модель':'Choose model'),()=>onAction(state.model?'open':'models'));
-    if(open){button(175,520,230,lang==='ru'?'Поток людей':'Visitors',()=>onAction('visitors'));button(copies>3?500:800,copies>3?650:660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));
+    if(open){button(175,520,290,lang==='ru'?'Поток пользователей':'User traffic',()=>onAction('visitors'));button(copies>3?500:800,copies>3?650:660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));
      person(75,375,0);person(175,332,1);person(270,287,2);}
    }
    const phase=state.live?.calendar.phase||'morning';shade.setAttribute('opacity',phase==='night'?.36:phase==='peak'?.08:0);
