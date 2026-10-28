@@ -42,7 +42,15 @@ object stay intact; the setting never affects serving calculations.
 - Changing a live copy’s GPUs drains its active work on the old configuration
   before applying the new placement. New requests wait or use other copies.
   Invalid placements are rejected before changing anything.
-- A rack's occupied places and its KV memory are separate indicators. Click a copy/card for exact values.
+- The program's concurrent-request limit and memory capacity are separate.
+  A limit of2 keeps a third request waiting even with spare memory. Processing
+  settings show both values; the game's1–256 setting range is explicitly a
+  simulator bound, not a GPU or real serving-program specification.
+- KV cache is temporary request memory for intermediate text computations.
+  Lessons explain it before asking about it. The game frees it after a reply;
+  model weights remain. Click a copy/card for exact memory values.
+- Processing help introduces the role of serving programs, with links to vLLM
+  and Hugging Face TGI. Their distinct real controls are not simulated in full.
 - Envelopes summarize actual arrival/completion changes. Their travel is visual
   feedback, not an extra processing stage. Reduced motion removes flying
   packets without stopping the model or hiding counts.
