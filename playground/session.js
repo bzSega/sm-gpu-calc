@@ -43,6 +43,7 @@ const GameSession=(()=>{
     let engine=C.createSession(S.config(settings),recent?{history:'recent'}:{}),source={anchor:0,credit:0,users:0,requests:0};
     let base=popularity,theme=world,p=clone(profile);const initialSettings=clone(settings),initialProfile=clone(profile);
     let profileChanges=[{afterUsers:0,atMs:0,profile:clone(profile)}];
+    let trafficSince=0,trafficArrivals=[];
     const settingsByReplica=Array.from({length:settings.replicas},()=>clone(settings));
     const appliedSettingsByReplica=Array.from({length:settings.replicas},()=>clone(settings));
     function matches(s,config){const c=S.config(s);return Object.keys(c).filter(k=>k!=='replicas').every(k=>c[k]===config[k]);}
@@ -70,7 +71,9 @@ const GameSession=(()=>{
           }else break;
         }
         for(let offset=0;offset<rows.length;offset+=10000)engine.enqueue(rows.slice(offset,offset+10000));
-        engine.advanceTo(target);next.requests+=rows.length;source=next;return api.inspect();
+        engine.advanceTo(target);next.requests+=rows.length;source=next;
+        trafficArrivals=trafficArrivals.concat(rows.map(r=>r.arrival_ms)).filter(t=>t>target-60000).sort((a,b)=>a-b);
+        return api.inspect();
       },
       setPopularity(value){
         checkPopularity(value);if(value===base)return api.inspect();const time=now();
@@ -96,10 +99,11 @@ const GameSession=(()=>{
       },
       inspect(){syncApplied();const state=engine.inspect();return {...state,calendar:calendar(state.timeMs),world:theme,
         users:source.users,requestsGenerated:source.requests,popularity:base,usersPerMinute:intensity(state.timeMs),
+        traffic:{windowMs:60000,ready:trafficSince===0||state.timeMs-trafficSince>=60000,requests:trafficArrivals.filter(t=>t<=state.timeMs).length,inboundRps:trafficSince===0||state.timeMs-trafficSince>=60000?trafficArrivals.filter(t=>t<=state.timeMs).length/60:null},
         profile:clone(p),settingsByReplica:clone(settingsByReplica),appliedSettingsByReplica:clone(appliedSettingsByReplica)};},
       records(){return engine.records();},
       save(){syncApplied();return {schema:recent?'ai-startup-session/2':'ai-startup-session/1',settings:clone(initialSettings),initialProfile:clone(initialProfile),profile:clone(p),profileChanges:clone(profileChanges),popularity:base,world:theme,
-        source:{...source},settingsByReplica:clone(settingsByReplica),appliedSettingsByReplica:clone(appliedSettingsByReplica),engine:engine.save()};},
+        source:{...source},traffic:{since:trafficSince,arrivals:[...trafficArrivals]},settingsByReplica:clone(settingsByReplica),appliedSettingsByReplica:clone(appliedSettingsByReplica),engine:engine.save()};},
       // Used only by restore after validating and replaying the serving journal.
       _restore(saved){
         const restored=C.restoreSession(saved.engine,recent?{history:'recent'}:{}),t=restored.inspect().timeMs,x=saved.source;
@@ -157,6 +161,16 @@ const GameSession=(()=>{
         // Source anchor is the latest generation boundary/action. It cannot
         // precede a phase boundary already observed by the session.
         if(nextBoundary(x.anchor)<=t)throw Error('Invalid source phase');
+        const future=restored.outstandingSamples().filter(r=>r.arrival_ms>t).map(r=>r.arrival_ms).sort((a,b)=>a-b);
+        if(saved.traffic!==undefined){
+          const traffic=saved.traffic,maxOffset=Math.max(...changes.flatMap(c=>task(c.profile).map(r=>r.arrival_ms)));
+          if(!traffic||!Number.isFinite(traffic.since)||traffic.since<0||traffic.since>t||!Array.isArray(traffic.arrivals)||traffic.arrivals.length>200000||traffic.arrivals.length>x.requests||traffic.arrivals.some((a,i)=>!Number.isSafeInteger(a)||a<=t-60000||a<0||a>t+maxOffset||i>0&&a<traffic.arrivals[i-1]))throw Error('Invalid traffic window');
+          const pending=traffic.arrivals.filter(a=>a>t);
+          if(pending.length!==future.length||pending.some((a,i)=>a!==future[i])||traffic.arrivals.length-pending.length>restored.inspect().arrived)throw Error('Traffic does not match pending arrivals');
+          trafficSince=traffic.since;trafficArrivals=[...traffic.arrivals];
+        }else if(saved.engine.schema==='sm-gpu-live/1'){
+          trafficSince=0;trafficArrivals=saved.engine.actions.filter(a=>a.type==='enqueue').flatMap(a=>a.rows.map(r=>r.arrival_ms)).filter(a=>a>t-60000).sort((a,b)=>a-b);
+        }else{trafficSince=t;trafficArrivals=future;}
         engine=restored;source={...x};settingsByReplica.splice(0,settingsByReplica.length,...clone(saved.settingsByReplica));
       }
     };

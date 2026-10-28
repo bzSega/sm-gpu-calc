@@ -24,10 +24,20 @@ object stay intact; the setting never affects serving calculations.
 
 ## Working service
 
+- The header's Fullscreen button enters/exits browser fullscreen; Esc exits
+  when no dialog is open. Dialogs remain part of the game. Unsupported or denied
+  fullscreen requests display a message; fullscreen is never restored without
+  a user gesture.
 - The service runs continuously, including while in-game menus are open. There
   are no play/pause, speed or timeline controls.
 - A day takes six real minutes. The **same fixed scale** applies to clock,
   arrivals and processing. Morning/rush/night repeat; queued work is not reset.
+- Incoming RPS counts actual arrivals in the last60 game seconds and divides
+  by60, including queued requests. Click the counter for its formula. It is
+  traffic to the whole service, not hardware utilization or maximum throughput;
+  GPUs within one copy work together. The first minute includes zero traffic
+  before opening. Old compact saves without traffic history collect a new
+  minute before displaying a value; old journals can recover the exact window.
 - Popularity controls new people per model minute in the morning. Rush hour is
   ×10; night is ×0.5. These are teaching assumptions, not measured traffic.
 - One person sends one request. Choose regular requests (10,000 input / 1,000

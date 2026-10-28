@@ -160,3 +160,22 @@ remain unchanged. Offline catch-up is still unsupported.
 a million waiting calls compressed without dropping work, exact mixed/fractional
 FIFO comparisons, draining maintenance, pending calls, legacy migration,
 corrupted checkpoints, lifetime counters and teaching completion witnesses.
+
+## Game incoming RPS
+
+GameSession inspection includes `traffic:{windowMs:60000, ready, requests,
+inboundRps}`. It counts actual arrivals in `(t−60000,t]`, including queue entries,
+and divides by60 seconds of model time. It does not divide by GPUs/copies and
+does not measure GPU utilization, admission throughput or maximum capacity.
+Before opening, arrivals are zero, so the first partial minute uses the same
+fixed denominator. Render frequency cannot affect arrivals or the window.
+Future OpenClaw calls count only when their scheduled arrival occurs.
+
+Optional save metadata `traffic:{since,arrivals}` retains only the recent window
+and known future arrivals. It is range/order/count checked and cross-checked
+against pending calls on load. As with historical checkpoint aggregates, this
+is saved game metadata, not independently authenticated measurement data.
+Legacy full journals reconstruct the window exactly. Legacy compact saves with
+no window set `ready:false` and `inboundRps:null` until a full minute is observed;
+the UI never substitutes a fabricated past rate. It warms only metrics, not
+work or learning progress. Finite calculator interfaces are unchanged.
