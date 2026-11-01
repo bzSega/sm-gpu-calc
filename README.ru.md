@@ -1,8 +1,15 @@
 # SM GPU Calc
 
+## ИИ-стартап — учебная игра
+
+[Играть](https://mikhaylov.com/gpu-calc/?lang=ru) · [Инструкция](playground/README.md)
+
+Три мира, установка GPU и модели, непрерывный поток запросов и шесть учебных заданий.
+Калькулятор сохранён отдельно; игра использует то же расчётное ядро. Дистрибутив игры — в GitHub Releases.
+
 **Нагрузка LLM → очередь → GPU-реплики → память, задержки и стоимость.**
 
-[Открыть калькулятор](https://mikhaylov.com/gpu-calc/?lang=ru) · [English](README.md) · **Русский**
+[Открыть калькулятор](https://mikhaylov.com/gpu-calc/calculator/?lang=ru) · [English](README.md) · **Русский**
 
 `MIT` · `HTML / CSS / JavaScript` · `Статический хостинг` · `RU / EN`
 

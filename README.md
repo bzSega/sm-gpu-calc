@@ -1,8 +1,16 @@
 # SM GPU Calc
 
+## AI Startup — educational game
+
+[Play](https://mikhaylov.com/gpu-calc/?lang=en) · [Game guide](playground/README.md)
+
+Three worlds, GPU/model setup, continuous request traffic and six learning tasks.
+The calculator remains available separately; the game uses the shared simulation core.
+Download the standalone game from GitHub Releases.
+
 **LLM workload → queue → GPU replicas → memory, latency and cost.**
 
-[Open the calculator](https://mikhaylov.com/gpu-calc/?lang=en) · **English** · [Русский](README.ru.md)
+[Open the calculator](https://mikhaylov.com/gpu-calc/calculator/?lang=en) · **English** · [Русский](README.ru.md)
 
 `MIT` · `HTML / CSS / JavaScript` · `Static hosting` · `RU / EN`
 
