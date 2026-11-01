@@ -163,3 +163,5 @@ It never edits `distr/`, uploads files or includes local saves, plans, agent
 instructions, concept sheets or repository history. Extract the ZIP to a new
 directory and serve that directory; open `/playground/`. Keep the whole layout,
 including both adjacent shared cores. Save JSON before changing origin.
+
+On phones, drag the location with one finger to reach off-screen objects. Tap an object to open it, or use the Rack / Service / User traffic buttons at the bottom. Panels scroll normally. / На телефоне двигайте локацию одним пальцем; нажмите на объект или используйте кнопки внизу. Панели прокручиваются как обычно.

@@ -3,6 +3,38 @@
 const StartupScene=(()=>{
  const NS='http://www.w3.org/2000/svg',XHTML='http://www.w3.org/1999/xhtml';
  function create(svg,onAction){
+  // The camera crops the artwork, not the controls. Pointer motion is in CSS
+  // pixels; convert it to scene units so touch and mouse have the same speed.
+  const bounds={width:1586,height:992};
+  let cx=bounds.width/2,cy=bounds.height/2,viewWidth=bounds.width,viewHeight=bounds.height,gesture=null,suppressClick=false;
+  function camera(){
+   const rect=svg.getBoundingClientRect();if(!rect.width||!rect.height)return;
+   const scale=Math.max(rect.width/bounds.width,rect.height/bounds.height);
+   viewWidth=Math.min(bounds.width,rect.width/scale);viewHeight=Math.min(bounds.height,rect.height/scale);
+   cx=Math.max(viewWidth/2,Math.min(bounds.width-viewWidth/2,cx));cy=Math.max(viewHeight/2,Math.min(bounds.height-viewHeight/2,cy));
+   svg.setAttribute('viewBox',`${cx-viewWidth/2} ${cy-viewHeight/2} ${viewWidth} ${viewHeight}`);
+  }
+  svg.addEventListener('pointerdown',event=>{
+   if(!event.isPrimary||event.button!==0)return;
+   suppressClick=false;const rect=svg.getBoundingClientRect();
+   gesture={id:event.pointerId,x:event.clientX,y:event.clientY,cx,cy,sx:viewWidth/rect.width,sy:viewHeight/rect.height,dragged:false};
+  });
+  svg.addEventListener('pointermove',event=>{
+   if(!gesture||gesture.id!==event.pointerId)return;
+   const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
+   if(!gesture.dragged&&Math.hypot(dx,dy)<8)return;
+   if(!gesture.dragged){gesture.dragged=true;svg.setPointerCapture(event.pointerId);svg.classList.toggle('panning',true);}
+   cx=gesture.cx-dx*gesture.sx;cy=gesture.cy-dy*gesture.sy;camera();event.preventDefault();
+  });
+  function endPan(event){
+   if(!gesture||gesture.id!==event.pointerId)return;
+   suppressClick=gesture.dragged;gesture=null;svg.classList.toggle('panning',false);
+   if(svg.hasPointerCapture(event.pointerId))svg.releasePointerCapture(event.pointerId);
+  }
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])svg.addEventListener(name,endPan);
+  svg.addEventListener('click',event=>{if(suppressClick&&event.detail!==0){suppressClick=false;event.preventDefault();event.stopImmediatePropagation();}},true);
+  new ResizeObserver(()=>{gesture=null;svg.classList.toggle('panning',false);camera();}).observe(svg);
+  camera();
   function el(tag,attrs={},parent=svg,text){const e=document.createElementNS(NS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;parent.append(e);return e;}
   const defs=el('defs'),deskClip=el('clipPath',{id:'startup-desk-occlusion',clipPathUnits:'userSpaceOnUse'},defs);
   // The desk is baked into the background. Hide seated legs behind its near edge.
