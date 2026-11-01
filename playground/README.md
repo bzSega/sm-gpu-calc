@@ -86,8 +86,9 @@ The memory experiment is derived from the selected model and shared memory
 checks. It is a teaching setup, not an optimal hardware recommendation.
 Switch to sandbox at any time without resetting work or learning progress.
 Progress is local and included in JSON saves (`ai-startup-lessons/1`).
-Technical checks cover task transitions; usability with real beginners is
-still to be evaluated.
+Technical checks cover task transitions. An observed beginner walkthrough
+identified unclear terms and controls; explanations and interactions were revised.
+This small formative check is not evidence of a general learning success rate.
 
 ## Saving
 
@@ -150,3 +151,15 @@ copy expansion, card memory, persistence/reload and downloaded-file import,
 RU/EN, keyboard activation and narrow layout. Generated environment, cabinet and visitor art is combined with live SVG
 GPU modules and memory indicators. Cabinets represent logical model groups,
 not a measured physical rack layout. Hardware detail is illustrative.
+
+## Separate release
+
+Run `python3 scripts/release-playground.py` from the repository root. Python 3
+and Node.js are required to build; players need only a static server and browser.
+The command runs the semantic tests, packages an explicit public allowlist and
+prints the ZIP path and SHA-256. The ZIP contains its own launch README and
+SHA-256 manifest. Identical allowlisted sources produce identical ZIP bytes.
+It never edits `distr/`, uploads files or includes local saves, plans, agent
+instructions, concept sheets or repository history. Extract the ZIP to a new
+directory and serve that directory; open `/playground/`. Keep the whole layout,
+including both adjacent shared cores. Save JSON before changing origin.
