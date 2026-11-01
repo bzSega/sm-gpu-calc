@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parent.parent
 # Deliberate public allowlist: no directory copies, saves, plans or agent files.
 FILES = (
-    'LICENSE', 'sim-core.js', 'scenario-core.js',
+    'LICENSE', 'sim-core.js', 'scenario-core.js', 'sitemap.xml',
     'playground/index.html', 'playground/hosting-index.html', 'playground/game.css', 'playground/app.js',
     'playground/session.js', 'playground/startup.js', 'playground/clock.js',
     'playground/presentation.js', 'playground/scene.js', 'playground/lessons.js',
@@ -30,7 +30,7 @@ Serve this extracted directory, preserving its layout:
 
 Open http://127.0.0.1:8030/playground/?lang=ru or ?lang=en.
 To host elsewhere, upload this entire directory to a separate path and open
-the directory root (the launcher preserves language/query settings) or its
+the directory root (a guide linking to the game and calculator) or its
 playground/ subdirectory. Replacing an existing calculator needs explicit approval.
 No backend, package installation, CDN, analytics or account is required.
 Use a current browser with SVG and HTML dialog support. Fullscreen may require
@@ -58,6 +58,9 @@ def build(output):
     subprocess.run(['node', '--test', *tests], cwd=ROOT, check=True)
     data = {name: (ROOT / name).read_bytes() for name in FILES}
     data['index.html'] = data.pop('playground/hosting-index.html')
+    data['share-preview.png'] = (ROOT / 'docs/screenshot-unified.png').read_bytes()
+    for name in ('index.html', 'simulation.html', 'sim-core.js', 'scenario-core.js', 'VERSION.txt'):
+        data['calculator/' + name] = (ROOT / 'distr' / name).read_bytes()
     # Hash the actual packaged bytes, without editing the working tree.
     html = data['playground/index.html'].decode()
     def version(match):

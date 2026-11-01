@@ -2,7 +2,7 @@
 
 ## AI Startup — educational game
 
-[Play](https://mikhaylov.com/gpu-calc/?lang=en) · [Game guide](playground/README.md)
+[Play](https://mikhaylov.com/gpu-calc/playground/?lang=en) · [Game guide](playground/README.md)
 
 Three worlds, GPU/model setup, continuous request traffic and six learning tasks.
 The calculator remains available separately; the game uses the shared simulation core.
@@ -182,7 +182,7 @@ sufficient. Use UTF-8 and serve `index.html` as the directory index.
 
 The hosted page includes a descriptive title, description, canonical URL,
 Open Graph / Twitter preview and WebApplication structured data. The canonical
-search page is `https://mikhaylov.com/gpu-calc/`; alternate HTML filenames and
+search page is `https://mikhaylov.com/gpu-calc/calculator/`; alternate HTML filenames and
 scenario query strings point to it. Russian metadata is present in the initial
 HTML; the English UI updates metadata in the browser and is not a separate
 search landing page. The initial heading and JavaScript-disabled explanation
@@ -192,7 +192,7 @@ The release copies the English overview screenshot to `share-preview.png` and
 publishes [the sitemap](https://mikhaylov.com/gpu-calc/sitemap.xml). For a different
 host, update the absolute URLs in the HTML and sitemap. Reference the sitemap
 from the **host's root** `robots.txt`, or submit it to search webmaster tools.
-No analytics counters are installed.
+Public source and release archives contain no analytics counters. Hosting-specific analytics must be added only to the deployment payload. The `/gpu-calc/` landing page links to the calculator and `/gpu-calc/playground/` game; all three canonical URLs are in the sitemap.
 
 ## Repository
 

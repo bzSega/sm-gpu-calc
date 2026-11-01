@@ -223,9 +223,17 @@ function updatePanel(){const s=game?.inspect();if(!s?.live||!$('panel').open)ret
  const traffic=b.querySelector('[data-traffic-summary]');if(traffic){const m=s.live.traffic;traffic.textContent=m.ready?(lang==='ru'?`${m.requests} запросов за 60 игровых секунд ÷ 60 = ${fmt(m.inboundRps,2)} RPS`:`${m.requests} requests in 60 game seconds ÷ 60 = ${fmt(m.inboundRps,2)} RPS`):(lang==='ru'?'Собираем полную минуту статистики после загрузки старого сохранения.':'Collecting a full minute after loading an older save.');}
  const why=b.querySelector('[data-why]');if(why)why.textContent=t({slots:'slots',memory:'memWait',maintenance:'maintWait',none:'noWait'}[s.live.waitingReason]);const sum=b.querySelector('[data-summary]');if(sum)sum.textContent=summary(s.live);
 }
+let seoLanguage=null;
 function render(force=false){
  updateFullscreen();
- const s=game?.inspect()||{stage:'empty',hardware:null,model:null,live:null,memory:null,world:preferredWorld};document.documentElement.lang=lang;document.title=`${t('title')} · Playground`;$('scene').setAttribute('aria-label',t(s.world==='server-room'?'server':s.world));$('object-dock').setAttribute('aria-label',t('objects'));
+ const s=game?.inspect()||{stage:'empty',hardware:null,model:null,live:null,memory:null,world:preferredWorld};document.documentElement.lang=lang;if(seoLanguage!==lang){seoLanguage=lang;document.title=lang==='ru'?'ИИ-стартап — учебная игра про GPU и LLM':'AI Startup — GPU and LLM learning game';
+ const description=lang==='ru'?'Соберите ИИ-сервис: установите GPU, выберите модель и настройте поток пользователей. Узнайте, почему возникают очереди и зачем нужен KV-кэш.':'Build an AI service: install GPUs, choose a model and adjust user traffic. Learn why requests queue up and what KV cache is for.';
+ for(const q of ['meta[name="description"]','meta[property="og:description"]','meta[name="twitter:description"]'])document.querySelector(q).content=description;
+ for(const q of ['meta[property="og:title"]','meta[name="twitter:title"]'])document.querySelector(q).content=document.title;
+ document.querySelector('meta[property="og:locale"]').content=lang==='ru'?'ru_RU':'en_US';
+ for(const e of document.querySelectorAll('[data-about-en]')){if(!e.dataset.aboutRu)e.dataset.aboutRu=e.textContent;e.textContent=lang==='en'?e.dataset.aboutEn:e.dataset.aboutRu;}
+}
+ $('scene').setAttribute('aria-label',t(s.world==='server-room'?'server':s.world));$('object-dock').setAttribute('aria-label',t('objects'));
  for(const [id,key] of Object.entries({'game-title':'title',greeting:'greeting',prototype:'prototype','menu-toggle':'menu',settings:'settings','load-menu':'load','rack-dock':'rack','terminal-dock':'terminal','visitors-dock':'visitors'}))$(id).textContent=t(key);
  $('new-game').textContent=t(game||stored?'again':'start');$('continue').hidden=!game&&!stored;$('continue').textContent=t(game?'backGame':'continue');$('menu-screen').hidden=!menu;$('world').inert=menu;$('menu-toggle').disabled=menu;$('close-panel').ariaLabel=t('close');
  $('object-dock').hidden=menu;$('object-dock').inert=menu;$('visitors-dock').disabled=!s.live;
