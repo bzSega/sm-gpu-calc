@@ -31,3 +31,10 @@ test('Touch drags stop at scene edges and ignore secondary pointers',()=>{
  const [x,y,w,h]=svg.getAttribute('viewBox').split(' ').map(Number);assert.equal(x,0);assert.equal(y,0);assert(w<=1586&&h<=992);
  const before=svg.getAttribute('viewBox');svg.fire('pointerdown',{isPrimary:false,pointerId:2});svg.fire('pointermove',{pointerId:2,clientX:-5000});assert.equal(svg.getAttribute('viewBox'),before);
 });
+
+test('Touch pans forty percent faster than mouse without changing tap threshold',()=>{
+ const mouse=scene(),touch=scene();const initial=Number(mouse.getAttribute('viewBox').split(' ')[0]);
+ mouse.fire('pointerdown',{pointerType:'mouse'});mouse.fire('pointermove',{clientX:200});
+ touch.fire('pointerdown',{pointerType:'touch'});touch.fire('pointermove',{clientX:200});
+ const md=initial-Number(mouse.getAttribute('viewBox').split(' ')[0]),td=initial-Number(touch.getAttribute('viewBox').split(' ')[0]);assert(Math.abs(td/md-1.4)<1e-10);
+});

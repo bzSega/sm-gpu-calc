@@ -13,7 +13,7 @@ const language=new URLSearchParams(location.search).get('lang');if(['ru','en'].i
 const t=k=>COPY[lang][k],fmt=(v,d=1)=>new Intl.NumberFormat(lang,{maximumFractionDigits:d}).format(v),gb=v=>`${fmt(v)} ${lang==='ru'?'ГБ':'GB'}`;
 function el(tag,text,parent,attrs={}){const e=document.createElement(tag);if(text!==null)e.textContent=text;for(const [k,v] of Object.entries(attrs))e.setAttribute(k,v);if(parent)parent.append(e);return e;}
 function btn(text,fn,parent,primary=false){const e=el('button',text,parent,{type:'button'});if(primary)e.className='primary';e.onclick=fn;return e;}
-function say(text){$('notice').textContent=text;$('notice').hidden=false;noticeUntil=performance.now()+5500;}
+function say(text){if($('panel').open){let message=$('panel-body').querySelector('[data-panel-message]');if(!message){message=el('p',null,null,{class:'panel-message','data-panel-message':'',role:'status',tabindex:'-1'});$('panel-body').prepend(message);}message.textContent=text;message.scrollIntoView({block:'nearest',behavior:'instant'});return;}$('notice').textContent=text;$('notice').hidden=false;noticeUntil=performance.now()+5500;}
 function stopAnswerSounds(){for(const id of ['answer-correct','answer-wrong']){const audio=$(id);audio.pause();audio.currentTime=0;}}
 function playAnswerSound(correct){stopAnswerSounds();if(!sound)return;const audio=$(correct?'answer-correct':'answer-wrong');audio.volume=.65;const playing=audio.play();if(playing)playing.catch(()=>{audio.dataset.playback='unavailable';});}
 function chooseLanguage(value){if(!['ru','en'].includes(value))return;lang=value;const url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);preferences();}
@@ -29,7 +29,7 @@ document.addEventListener('fullscreenchange',updateFullscreen);
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.fullscreenElement&&!$('panel').open){event.preventDefault();document.exitFullscreen().catch(()=>{});}});
 function switchWorld(world){preferredWorld=world;if(game)game.setWorld(world);preferences();persist();render(true);for(const b of document.querySelectorAll('[data-world-choice]'))b.setAttribute('aria-pressed',String(b.dataset.worldChoice===world));}
 function closePanel(){detail=null;if($('panel').open)$('panel').close();}
-function panel(title,build,object=null){detail=object;$('panel-title').textContent=title;$('panel-world').value=game?.inspect().world||preferredWorld;$('panel-world').setAttribute('aria-label',t('world'));for(const option of $('panel-world').options)option.textContent=t(option.value==='server-room'?'server':option.value);$('panel-body').replaceChildren();build($('panel-body'));if(!$('panel').open)$('panel').showModal();}
+function panel(title,build,object=null){detail=object;$('panel-title').textContent=title;$('panel-world').value=game?.inspect().world||preferredWorld;$('panel-world').setAttribute('aria-label',t('world'));for(const option of $('panel-world').options)option.textContent=t(option.value==='server-room'?'server':option.value);$('panel-body').replaceChildren();build($('panel-body'));if(!$('panel').open)$('panel').showModal();$('panel-body').scrollTop=0;}
 function row(label,value,parent){const d=el('div',null,parent,{class:'field'});el('span',label,d);el('strong',value,d);return d;}
 function action(fn){try{fn();render(true);}catch(error){say(error.message);}}
 const scene=StartupScene.create($('scene'),(kind,id)=>{if(menu)return;selected=id||selected;if(kind==='rack')rackPanel();if(kind==='models')modelsPanel();if(kind==='open')readyPanel();if(kind==='visitors')visitorsPanel();if(kind==='copies')copiesPanel();if(kind==='queue')whyPanel();render(true);});
@@ -96,7 +96,7 @@ function maintenancePanel(){
  panel(t('addGPU'),body=>{
   el('p',lang==='ru'?'Копия завершит активные запросы на прежних картах, затем сменит размещение. Остальные копии продолжают работу. Скорости учебного профиля сохраняются.':'This copy finishes active requests on its current GPUs before changing placement. Other copies keep working. Teaching profile rates stay the same.',body);
   if(copy.pendingSettings){el('p',t('maintWait'),body,{'data-waiting-config':'hardware'});return;}
-  const label=el('label','GPU',body,{class:'field'}),gpu=el('select',null,label);
+  const label=el('label','GPU',body,{class:'field'}),gpu=el('select',null,label,{'aria-label':'GPU'});
   for(const name of Object.keys(ScenarioCore.gpus))el('option',name,gpu,{value:name});gpu.value=copy.hardware.gpu;
   const l=el('label',t('cards'),body,{class:'field'}),count=el('input',null,l,{type:'number',min:1,max:16,step:1});count.value=copy.hardware.cards;
   const feedback=el('div',null,body,{class:'preview','aria-live':'polite'});

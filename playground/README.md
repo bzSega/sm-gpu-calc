@@ -165,3 +165,5 @@ directory and serve that directory; open `/playground/`. Keep the whole layout,
 including both adjacent shared cores. Save JSON before changing origin.
 
 On phones, drag the location with one finger to reach off-screen objects. Tap an object to open it, or use the Rack / Service / User traffic buttons at the bottom. Panels scroll normally. / На телефоне двигайте локацию одним пальцем; нажмите на объект или используйте кнопки внизу. Панели прокручиваются как обычно.
+
+Touch navigation uses a 1.4× movement gain; mouse dragging stays 1:1. Mobile forms use larger hit areas, reflowing actions and messages inside the active dialog. On short portrait screens the tutorial is compact; open its task button for the full explanation. Browser checks cover 320/360 px portrait and short landscape layouts, but do not replace testing Safari/Chrome and the on-screen keyboard on a physical phone.

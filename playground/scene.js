@@ -4,27 +4,32 @@ const StartupScene=(()=>{
  const NS='http://www.w3.org/2000/svg',XHTML='http://www.w3.org/1999/xhtml';
  function create(svg,onAction){
   // The camera crops the artwork, not the controls. Pointer motion is in CSS
-  // pixels; convert it to scene units so touch and mouse have the same speed.
-  const bounds={width:1586,height:992};
-  let cx=bounds.width/2,cy=bounds.height/2,viewWidth=bounds.width,viewHeight=bounds.height,gesture=null,suppressClick=false;
+  // pixels; convert to scene units, with a modest speed boost for touch.
+  const bounds={width:1586,height:992},worldButtons=[];
+  let cx=bounds.width/2,cy=bounds.height/2,viewWidth=bounds.width,viewHeight=bounds.height,gesture=null,suppressClick=false,queueGroup=null;
   function camera(){
    const rect=svg.getBoundingClientRect();if(!rect.width||!rect.height)return;
    const scale=Math.max(rect.width/bounds.width,rect.height/bounds.height);
    viewWidth=Math.min(bounds.width,rect.width/scale);viewHeight=Math.min(bounds.height,rect.height/scale);
    cx=Math.max(viewWidth/2,Math.min(bounds.width-viewWidth/2,cx));cy=Math.max(viewHeight/2,Math.min(bounds.height-viewHeight/2,cy));
    svg.setAttribute('viewBox',`${cx-viewWidth/2} ${cy-viewHeight/2} ${viewWidth} ${viewHeight}`);
+   // Keep scene actions legible even when the artwork is scaled down.
+   const ui=Math.max(1,1/scale);
+   if(queueGroup)queueGroup.setAttribute('transform',`translate(594 548) scale(${ui}) translate(-594 -548)`);
+   for(const {f,b,x,width} of worldButtons){f.setAttribute('x',x-(width*ui-width)/2);f.setAttribute('width',width*ui);f.setAttribute('height',60*ui);b.style.fontSize=`${19*ui}px`;b.style.minHeight=`${44*ui}px`;b.style.padding=`${8*ui}px ${12*ui}px`;}
+
   }
   svg.addEventListener('pointerdown',event=>{
    if(!event.isPrimary||event.button!==0)return;
    suppressClick=false;const rect=svg.getBoundingClientRect();
-   gesture={id:event.pointerId,x:event.clientX,y:event.clientY,cx,cy,sx:viewWidth/rect.width,sy:viewHeight/rect.height,dragged:false};
+   gesture={id:event.pointerId,x:event.clientX,y:event.clientY,cx,cy,sx:viewWidth/rect.width,sy:viewHeight/rect.height,gain:event.pointerType==='touch'?1.4:1,dragged:false};
   });
   svg.addEventListener('pointermove',event=>{
    if(!gesture||gesture.id!==event.pointerId)return;
    const dx=event.clientX-gesture.x,dy=event.clientY-gesture.y;
    if(!gesture.dragged&&Math.hypot(dx,dy)<8)return;
    if(!gesture.dragged){gesture.dragged=true;svg.setPointerCapture(event.pointerId);svg.classList.toggle('panning',true);}
-   cx=gesture.cx-dx*gesture.sx;cy=gesture.cy-dy*gesture.sy;camera();event.preventDefault();
+   cx=gesture.cx-dx*gesture.sx*gesture.gain;cy=gesture.cy-dy*gesture.sy*gesture.gain;camera();event.preventDefault();
   });
   function endPan(event){
    if(!gesture||gesture.id!==event.pointerId)return;
@@ -44,11 +49,11 @@ const StartupScene=(()=>{
   const paths=el('g',{'aria-hidden':'true'}),actors=el('g',{'aria-hidden':'true','clip-path':'url(#startup-desk-occlusion)'}),rackLayer=el('g'),flightLayer=el('g',{'aria-hidden':'true','data-flow-effects':''});
   const inbound=el('path',{d:'M 290 430 L 510 570 L 720 490 L 880 410',fill:'none',stroke:'#cc9c4d','stroke-width':5,'stroke-dasharray':'10 12',opacity:.8},paths);
   const outbound=el('path',{d:'M 910 450 L 710 550 L 480 640 L 260 480',fill:'none',stroke:'#92cfaf','stroke-width':5,'stroke-dasharray':'10 12',opacity:.7},paths);
-  const queueGroup=el('g',{class:'scene-queue',role:'button',tabindex:0,'aria-haspopup':'dialog'});const queueTitle=el('title',{},queueGroup);queueGroup.onclick=()=>onAction('queue');queueGroup.onkeydown=event=>{if(!event.repeat&&(event.key==='Enter'||event.key===' ')){event.preventDefault();onAction('queue');}};el('rect',{x:510,y:515,width:168,height:67,rx:6,fill:'#433e2c',stroke:'#c3a66b','stroke-width':3},queueGroup);
+  queueGroup=el('g',{class:'scene-queue',role:'button',tabindex:0,'aria-haspopup':'dialog'});const queueTitle=el('title',{},queueGroup);queueGroup.onclick=()=>onAction('queue');queueGroup.onkeydown=event=>{if(!event.repeat&&(event.key==='Enter'||event.key===' ')){event.preventDefault();onAction('queue');}};el('rect',{x:510,y:515,width:168,height:67,rx:6,fill:'#433e2c',stroke:'#c3a66b','stroke-width':3},queueGroup);
   const queueLabel=el('text',{x:594,y:540,'text-anchor':'middle',fill:'#fff4d6','font-size':18,'font-family':'system-ui','data-queue-label':''},queueGroup);
   const queueValue=el('text',{x:594,y:569,'text-anchor':'middle',fill:'#ffcf76','font-size':26,'font-family':'system-ui','font-weight':800,'data-queue-value':''},queueGroup);
   let key='',rackRefs=[],lastArrived=0,lastCompleted=0,flights=[];
-  function button(x,y,width,label,action,parent=rackLayer){const f=el('foreignObject',{x,y,width,height:60},parent),b=document.createElementNS(XHTML,'button');b.setAttribute('class','world-button');b.textContent=label;b.onclick=action;f.append(b);return b;}
+  function button(x,y,width,label,action,parent=rackLayer){const f=el('foreignObject',{x,y,width,height:60},parent),b=document.createElementNS(XHTML,'button');b.setAttribute('class','world-button');b.textContent=label;b.onclick=action;f.append(b);worldButtons.push({f,b,x,width});return b;}
   function person(x,y,variant){
    const g=el('g',{'data-visitor':variant},actors);
    el('image',{href:'assets/visitor.png',x,y,width:145,height:145,style:variant===1?'filter:hue-rotate(25deg)':variant===2?'filter:hue-rotate(-25deg)':''},g);
@@ -84,12 +89,13 @@ const StartupScene=(()=>{
    backdrop.setAttribute('href',`assets/${state.world||'server-room'}.png`);
    const signature=[state.world,JSON.stringify(state.copies?.map(c=>c.hardware)),state.stage,state.hardware?.gpu,state.hardware?.cards,state.model,copies,selected,lang].join('|');
    if(key!==signature){
-    key=signature;rackLayer.replaceChildren();actors.replaceChildren();rackRefs=[];if(state.stage==='empty'){flights.forEach(f=>f.node.remove());flights=[];}
+    key=signature;worldButtons.length=0;rackLayer.replaceChildren();actors.replaceChildren();rackRefs=[];if(state.stage==='empty'){flights.forEach(f=>f.node.remove());flights=[];}
     for(const item of StartupPresentation.layout(copies)){const hw=state.copies?.find(c=>c.id===item.id)?.hardware||state.hardware,g=rack(0,0,item.id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${item.id} · ${hw.cards} GPU`,selected===item.id);g.setAttribute('transform',`translate(${item.x} ${item.y}) scale(${item.scale})`);}
 
     if(state.hardware&&!open)button(270,350,260,state.model?(lang==='ru'?'Открыть сервис':'Open service'):(lang==='ru'?'Выбрать модель':'Choose model'),()=>onAction(state.model?'open':'models'));
     if(open){button(175,520,290,lang==='ru'?'Поток пользователей':'User traffic',()=>onAction('visitors'));button(copies>3?500:800,copies>3?650:660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));
      person(75,375,0);person(175,332,1);person(270,287,2);}
+    camera();
    }
    const phase=state.live?.calendar.phase||'morning';shade.setAttribute('opacity',phase==='night'?.36:phase==='peak'?.08:0);
    paths.style.display=open?'':'none';queueGroup.style.display=open?'':'none';queueLabel.textContent=lang==='ru'?'Очередь ↗':'Queue ↗';const queued=state.live?.queued||0;queueValue.textContent=queued;queueTitle.textContent=lang==='ru'?'Узнать причину ожидания':'Explain waiting requests';queueGroup.setAttribute('aria-label',lang==='ru'?`Очередь: ${queued}. Узнать причину ожидания`:`Queue: ${queued}. Explain waiting requests`);
