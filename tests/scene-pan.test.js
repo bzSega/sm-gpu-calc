@@ -1,17 +1,17 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
-function scene(){
+function scene(actions=[]){
  class Element{
-  constructor(){this.attrs={};this.children=[];this.listeners={};this.style={};this.classList={toggle(){}};}
+  constructor(tag){this.tag=tag;this.attrs={};this.children=[];this.listeners={};this.style={};this.classList={toggle(){}};}
   setAttribute(k,v){this.attrs[k]=String(v);} getAttribute(k){return this.attrs[k];}
-  append(n){this.children.push(n);} addEventListener(t,fn){(this.listeners[t]??=[]).push(fn);}
+  append(n){this.children.push(n);} replaceChildren(){this.children=[];} addEventListener(t,fn){(this.listeners[t]??=[]).push(fn);}
   getBoundingClientRect(){return {width:390,height:844};}
   setPointerCapture(){} releasePointerCapture(){} hasPointerCapture(){return true;}
   fire(t,values={}){const e={pointerId:1,isPrimary:true,button:0,clientX:150,clientY:450,detail:1,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...values};for(const f of this.listeners[t]||[])f(e);return e;}
  }
- const svg=new Element();svg.setAttribute('viewBox','0 0 1586 992');
- const context=vm.createContext({document:{createElementNS:()=>new Element()},ResizeObserver:class{observe(){}},performance:{now:()=>100},window:{addEventListener(){}},Math});
- vm.runInContext(fs.readFileSync(require.resolve('../playground/scene.js'),'utf8')+';StartupScene.create(svg,()=>{});',Object.assign(context,{svg}));return svg;
+ const svg=new Element('svg');svg.setAttribute('viewBox','0 0 1586 992');
+ const context=vm.createContext({document:{createElementNS:(ns,tag)=>new Element(tag)},StartupPresentation:{layout:()=>[{id:1,x:800,y:180,scale:1}]},ResizeObserver:class{observe(){}},performance:{now:()=>100},window:{addEventListener(){}},Math});
+ vm.runInContext(fs.readFileSync(require.resolve('../playground/scene.js'),'utf8')+';var api=StartupScene.create(svg,(...args)=>actions.push(args));',Object.assign(context,{svg,actions}));svg.render=()=>vm.runInContext("api.render({stage:'empty',world:'server-room'},{lang:'ru',reduced:true});",context);return svg;
 }
 test('Dragging a narrow scene reveals off-screen objects without activating them',()=>{
  const svg=scene(),before=svg.getAttribute('viewBox');
@@ -37,4 +37,11 @@ test('Touch pans forty percent faster than mouse without changing tap threshold'
  mouse.fire('pointerdown',{pointerType:'mouse'});mouse.fire('pointermove',{clientX:200});
  touch.fire('pointerdown',{pointerType:'touch'});touch.fire('pointermove',{clientX:200});
  const md=initial-Number(mouse.getAttribute('viewBox').split(' ')[0]),td=initial-Number(touch.getAttribute('viewBox').split(' ')[0]);assert(Math.abs(td/md-1.4)<1e-10);
+});
+
+test('Scene rack action uses a native SVG hit target and supports tap and keyboard',()=>{
+ const actions=[],svg=scene(actions);svg.render();const walk=e=>[e,...e.children.flatMap(walk)];const nodes=walk(svg);
+ assert.equal(nodes.filter(e=>e.tag==='foreignObject').length,0,'WebKit scene controls must not depend on transformed HTML inside SVG');
+ const button=nodes.find(e=>e.attrs['data-scene-action']==='rack');assert(button,'Rack has an interactive SVG target');assert.equal(button.attrs.role,'button');assert.equal(button.attrs.tabindex,'0');
+ button.onclick();assert.deepEqual(actions.map(a=>Array.from(a)),[['rack',1]]);let prevented=false;button.onkeydown({key:'Enter',repeat:false,preventDefault(){prevented=true;}});assert(prevented);assert.equal(actions.length,2);
 });

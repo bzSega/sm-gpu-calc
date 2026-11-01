@@ -75,3 +75,6 @@ dialog[open]{display:flex;flex-direction:column;overflow:hidden}dialog>header{po
  .tip>span,.tip p{display:none}.tip h2{margin:0;font-size:16px}.tip #lesson-open{margin:0;max-width:130px;min-height:44px}
  .live-summary{top:88px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.live-summary>span,.live-summary button{padding:6px}
 }
+
+.scene-action{cursor:pointer;touch-action:manipulation}.scene-action:focus{outline:none}.scene-action:focus-visible>rect{stroke:#ad661c;stroke-width:4}
+@media(hover:hover) and (pointer:fine){.scene-action:hover>rect{fill:#f4e9ca}}

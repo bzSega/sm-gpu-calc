@@ -1,7 +1,7 @@
 // Small data-driven isometric scene. Never advances or changes the simulation.
 'use strict';
 const StartupScene=(()=>{
- const NS='http://www.w3.org/2000/svg',XHTML='http://www.w3.org/1999/xhtml';
+ const NS='http://www.w3.org/2000/svg';
  function create(svg,onAction){
   // The camera crops the artwork, not the controls. Pointer motion is in CSS
   // pixels; convert to scene units, with a modest speed boost for touch.
@@ -16,7 +16,7 @@ const StartupScene=(()=>{
    // Keep scene actions legible even when the artwork is scaled down.
    const ui=Math.max(1,1/scale);
    if(queueGroup)queueGroup.setAttribute('transform',`translate(594 548) scale(${ui}) translate(-594 -548)`);
-   for(const {f,b,x,width} of worldButtons){f.setAttribute('x',x-(width*ui-width)/2);f.setAttribute('width',width*ui);f.setAttribute('height',60*ui);b.style.fontSize=`${19*ui}px`;b.style.minHeight=`${44*ui}px`;b.style.padding=`${8*ui}px ${12*ui}px`;}
+   for(const item of worldButtons){const size=Math.max(1,1/(scale*item.parentScale));item.g.setAttribute('transform',`translate(${item.x-(item.width*size-item.width)/2} ${item.y}) scale(${size})`);}
 
   }
   svg.addEventListener('pointerdown',event=>{
@@ -53,7 +53,15 @@ const StartupScene=(()=>{
   const queueLabel=el('text',{x:594,y:540,'text-anchor':'middle',fill:'#fff4d6','font-size':18,'font-family':'system-ui','data-queue-label':''},queueGroup);
   const queueValue=el('text',{x:594,y:569,'text-anchor':'middle',fill:'#ffcf76','font-size':26,'font-family':'system-ui','font-weight':800,'data-queue-value':''},queueGroup);
   let key='',rackRefs=[],lastArrived=0,lastCompleted=0,flights=[];
-  function button(x,y,width,label,action,parent=rackLayer){const f=el('foreignObject',{x,y,width,height:60},parent),b=document.createElementNS(XHTML,'button');b.setAttribute('class','world-button');b.textContent=label;b.onclick=action;f.append(b);worldButtons.push({f,b,x,width});return b;}
+  function button(x,y,width,label,action,parent=rackLayer,kind='scene'){
+   // Native SVG controls avoid WebKit's transformed foreignObject hit-testing.
+   const g=el('g',{class:'scene-action',role:'button',tabindex:0,'aria-label':label,'data-scene-action':kind},parent);
+   el('rect',{width,height:48,rx:7,fill:'#fffae9',stroke:'#42674e','stroke-width':2},g);
+   el('text',{x:width/2,y:30,'text-anchor':'middle',fill:'#2b4034','font-size':19,'font-weight':700,'font-family':'system-ui','pointer-events':'none'},g,label);
+   g.onclick=action;g.onkeydown=event=>{if(!event.repeat&&(event.key==='Enter'||event.key===' ')){event.preventDefault();action();}};
+   worldButtons.push({g,x,y,width,parentScale:1});return g;
+  }
+
   function person(x,y,variant){
    const g=el('g',{'data-visitor':variant},actors);
    el('image',{href:'assets/visitor.png',x,y,width:145,height:145,style:variant===1?'filter:hue-rotate(25deg)':variant===2?'filter:hue-rotate(-25deg)':''},g);
@@ -81,7 +89,7 @@ const StartupScene=(()=>{
    const weight=el('rect',{x:bx,width:10,fill:'#fa9578'},strip),reserve=el('rect',{x:bx,width:10,fill:'#92997a'},strip),kv=el('rect',{x:bx,width:10,fill:'#88d3b6'},strip);
    const lamp=el('rect',{x:14,y:218,width:8,height:7,fill:'#adb39a'},face);
    const info=el('text',{x:27,y:225,fill:'#f6efda','font-size':11,'font-family':'system-ui'},face);
-   button(x-16,y+285,205,label,()=>onAction('rack',id),g);
+   button(x-16,y+285,205,label,()=>onAction('rack',id),g,'rack');
    rackRefs.push({id,weight,reserve,kv,lamp,info,by,bh});return g;
   }
   function render(state,{lang='ru',selected=1,reduced=false}={}){
@@ -90,7 +98,7 @@ const StartupScene=(()=>{
    const signature=[state.world,JSON.stringify(state.copies?.map(c=>c.hardware)),state.stage,state.hardware?.gpu,state.hardware?.cards,state.model,copies,selected,lang].join('|');
    if(key!==signature){
     key=signature;worldButtons.length=0;rackLayer.replaceChildren();actors.replaceChildren();rackRefs=[];if(state.stage==='empty'){flights.forEach(f=>f.node.remove());flights=[];}
-    for(const item of StartupPresentation.layout(copies)){const hw=state.copies?.find(c=>c.id===item.id)?.hardware||state.hardware,g=rack(0,0,item.id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${item.id} · ${hw.cards} GPU`,selected===item.id);g.setAttribute('transform',`translate(${item.x} ${item.y}) scale(${item.scale})`);}
+    for(const item of StartupPresentation.layout(copies)){const hw=state.copies?.find(c=>c.id===item.id)?.hardware||state.hardware,g=rack(0,0,item.id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${item.id} · ${hw.cards} GPU`,selected===item.id);g.setAttribute('transform',`translate(${item.x} ${item.y}) scale(${item.scale})`);worldButtons[worldButtons.length-1].parentScale=item.scale;}
 
     if(state.hardware&&!open)button(270,350,260,state.model?(lang==='ru'?'Открыть сервис':'Open service'):(lang==='ru'?'Выбрать модель':'Choose model'),()=>onAction(state.model?'open':'models'));
     if(open){button(175,520,290,lang==='ru'?'Поток пользователей':'User traffic',()=>onAction('visitors'));button(copies>3?500:800,copies>3?650:660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));

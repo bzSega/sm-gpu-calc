@@ -234,7 +234,7 @@ function render(force=false){
  for(const e of document.querySelectorAll('[data-about-en]')){if(!e.dataset.aboutRu)e.dataset.aboutRu=e.textContent;e.textContent=lang==='en'?e.dataset.aboutEn:e.dataset.aboutRu;}
 }
  $('scene').setAttribute('aria-label',t(s.world==='server-room'?'server':s.world));$('object-dock').setAttribute('aria-label',t('objects'));
- for(const [id,key] of Object.entries({'game-title':'title',greeting:'greeting',prototype:'prototype','menu-toggle':'menu',settings:'settings','load-menu':'load','rack-dock':'rack','terminal-dock':'terminal','visitors-dock':'visitors'}))$(id).textContent=t(key);
+ for(const [id,key] of Object.entries({'game-title':'title',greeting:'greeting',prototype:'prototype','menu-toggle':'menu',settings:'settings','load-menu':'load','rack-dock':'rack','terminal-dock':'terminal','visitors-dock':'visitors'})){const node=$(id),label=t(key);if(node.textContent!==label)node.textContent=label;}
  $('new-game').textContent=t(game||stored?'again':'start');$('continue').hidden=!game&&!stored;$('continue').textContent=t(game?'backGame':'continue');$('menu-screen').hidden=!menu;$('world').inert=menu;$('menu-toggle').disabled=menu;$('close-panel').ariaLabel=t('close');
  $('pan-hint').textContent=lang==='ru'?'Двигайте локацию пальцем':'Drag to explore the location';
  $('object-dock').hidden=menu;$('object-dock').inert=menu;$('visitors-dock').disabled=!s.live;
