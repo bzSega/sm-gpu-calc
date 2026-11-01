@@ -50,3 +50,5 @@ sine notes (523.25 / 659.25 / 783.99 Hz) with a quiet second harmonic. The error
 cue uses two falling buzzer notes (220 / 155.56 Hz), built from the first four
 odd harmonics. Short attack/release envelopes prevent clicks; playback gain is
 limited. Sounds play only on an answer click and can be disabled in settings.
+
+Floor pads were removed from the three world backgrounds on 2026-11-01 using image editing. The scene now draws each cabinet footprint in SVG with the cabinet transform, so it follows its position and scale.

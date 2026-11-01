@@ -44,7 +44,7 @@ const StartupScene=(()=>{
   const defs=el('defs'),deskClip=el('clipPath',{id:'startup-desk-occlusion',clipPathUnits:'userSpaceOnUse'},defs);
   // The desk is baked into the background. Hide seated legs behind its near edge.
   el('polygon',{points:'0,0 600,0 600,270 0,510'},deskClip);
-  const backdrop=el('image',{href:'assets/server-room.png',width:1586,height:992});
+  const backdrop=el('image',{href:'assets/server-room.png?v=floor-2',width:1586,height:992});
   const shade=el('rect',{width:1586,height:992,fill:'#182a4c',opacity:0,'pointer-events':'none'});
   const paths=el('g',{'aria-hidden':'true'}),actors=el('g',{'aria-hidden':'true','clip-path':'url(#startup-desk-occlusion)'}),rackLayer=el('g'),flightLayer=el('g',{'aria-hidden':'true','data-flow-effects':''});
   const inbound=el('path',{d:'M 290 430 L 510 570 L 720 490 L 880 410',fill:'none',stroke:'#cc9c4d','stroke-width':5,'stroke-dasharray':'10 12',opacity:.8},paths);
@@ -69,10 +69,15 @@ const StartupScene=(()=>{
 
 
   function envelope(parent,x=0,y=0,color='#efbd65'){const g=el('g',{transform:`translate(${x} ${y})`},parent);el('rect',{x:-13,y:-9,width:26,height:18,fill:color,stroke:'#624e31','stroke-width':2},g);el('path',{d:'M -12 -8 L 0 1 L 12 -8',fill:'none',stroke:'#624e31','stroke-width':2},g);return g;}
-  function rack(x,y,id,state,label,selected){
+  function rack(x,y,id,state,label,selected,compact=false){
    const g=el('g',{'data-copy':id},rackLayer),hardware=state.copies?.find(c=>c.id===id)?.hardware||state.hardware;
-   const frame=el('g',{},g);el('image',{href:'assets/rack-shell.png',x:x-8,y:y-35,width:200,height:330},frame);
-   const face=el('g',{transform:`translate(${x} ${y}) matrix(1 .22 0 1 0 0)`},g);
+   // Shear artwork and its GPU overlays together to follow the floor axes.
+   // Keep the action outside this group so its text and touch target stay level.
+   const cabinet=el('g',{transform:'matrix(1 .28 0 1 0 0)'},g);
+   // Ground footprint follows the same projection, position and scale as the cabinet.
+   el('polygon',{points:'-7,259 133,290 195,231 55,200',fill:'#78816a','fill-opacity':.32,stroke:selected?'#e9d28b':'#a5ad87','stroke-width':2,'stroke-dasharray':'7 5','pointer-events':'none','data-rack-footprint':''},cabinet);
+   const frame=el('g',{},cabinet);el('image',{href:'assets/rack-shell.png',x:x-8,y:y-35,width:200,height:330},frame);
+   const face=el('g',{transform:`translate(${x} ${y}) matrix(1 .22 0 1 0 0)`},cabinet);
    if(selected)el('rect',{x:6,y:12,width:122,height:224,fill:'none',stroke:'#ffe19a','stroke-width':3},face);
    el('rect',{x:12,y:16,width:107,height:20,fill:'#1b3028'},face);el('text',{x:18,y:31,fill:'#f8f1dc','font-size':13,'font-family':'system-ui','font-weight':800},face,hardware?hardware.gpu:'GPU');
    const cards=hardware?.cards||0,cols=cards>8?2:1;
@@ -89,16 +94,21 @@ const StartupScene=(()=>{
    const weight=el('rect',{x:bx,width:10,fill:'#fa9578'},strip),reserve=el('rect',{x:bx,width:10,fill:'#92997a'},strip),kv=el('rect',{x:bx,width:10,fill:'#88d3b6'},strip);
    const lamp=el('rect',{x:14,y:218,width:8,height:7,fill:'#adb39a'},face);
    const info=el('text',{x:27,y:225,fill:'#f6efda','font-size':11,'font-family':'system-ui'},face);
-   button(x-16,y+285,205,label,()=>onAction('rack',id),g,'rack');
+   if(compact){
+    cabinet.setAttribute('role','button');cabinet.setAttribute('tabindex','0');cabinet.setAttribute('aria-label',label);cabinet.setAttribute('data-scene-action','rack');
+    el('title',{},cabinet,label);
+    cabinet.onclick=()=>onAction('rack',id);
+    cabinet.onkeydown=event=>{if(!event.repeat&&(event.key==='Enter'||event.key===' ')){event.preventDefault();onAction('rack',id);}};
+   }else button(x-16,y+325,205,label,()=>onAction('rack',id),g,'rack');
    rackRefs.push({id,weight,reserve,kv,lamp,info,by,bh});return g;
   }
   function render(state,{lang='ru',selected=1,reduced=false}={}){
    const open=!!state.live,copies=state.live?.replicas.length||1;
-   backdrop.setAttribute('href',`assets/${state.world||'server-room'}.png`);
+   backdrop.setAttribute('href',`assets/${state.world||'server-room'}.png?v=floor-2`);
    const signature=[state.world,JSON.stringify(state.copies?.map(c=>c.hardware)),state.stage,state.hardware?.gpu,state.hardware?.cards,state.model,copies,selected,lang].join('|');
    if(key!==signature){
     key=signature;worldButtons.length=0;rackLayer.replaceChildren();actors.replaceChildren();rackRefs=[];if(state.stage==='empty'){flights.forEach(f=>f.node.remove());flights=[];}
-    for(const item of StartupPresentation.layout(copies)){const hw=state.copies?.find(c=>c.id===item.id)?.hardware||state.hardware,g=rack(0,0,item.id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${item.id} · ${hw.cards} GPU`,selected===item.id);g.setAttribute('transform',`translate(${item.x} ${item.y}) scale(${item.scale})`);worldButtons[worldButtons.length-1].parentScale=item.scale;}
+    for(const item of StartupPresentation.layout(copies).sort((a,b)=>(a.y+290*a.scale)-(b.y+290*b.scale)||a.x-b.x)){const hw=state.copies?.find(c=>c.id===item.id)?.hardware||state.hardware,g=rack(0,0,item.id,state,!hw?(lang==='ru'?'Установить GPU':'Install GPUs'):`${lang==='ru'?'Копия':'Copy'} ${item.id} · ${hw.cards} GPU`,selected===item.id,copies>3);g.setAttribute('transform',`translate(${item.x} ${item.y}) scale(${item.scale})`);if(copies<=3)worldButtons[worldButtons.length-1].parentScale=item.scale;}
 
     if(state.hardware&&!open)button(270,350,260,state.model?(lang==='ru'?'Открыть сервис':'Open service'):(lang==='ru'?'Выбрать модель':'Choose model'),()=>onAction(state.model?'open':'models'));
     if(open){button(175,520,290,lang==='ru'?'Поток пользователей':'User traffic',()=>onAction('visitors'));button(copies>3?500:800,copies>3?650:660,260,lang==='ru'?`Все копии · ${copies}`:`All copies · ${copies}`,()=>onAction('copies'));

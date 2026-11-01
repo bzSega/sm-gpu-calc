@@ -14,9 +14,14 @@ const StartupPresentation=(()=>{
  }
  function layout(count){
   if(!Number.isInteger(count)||count<1||count>64)throw Error('Invalid copy count');
-  if(count<=3)return Array.from({length:count},(_,i)=>({id:i+1,x:[840,1100,1350][i],y:[205,345,480][i],scale:1}));
-  const cols=count<=16?4:8,scale=count<=16?.43:.27;
-  return Array.from({length:count},(_,i)=>({id:i+1,x:760+(i%cols)*(cols===4?170:92),y:160+Math.floor(i/cols)*(cols===4?155:80),scale}));
+  // Centers of the three floor pads, shared by all world backgrounds.
+  // The cabinet's ground contact is (88, 290) after perspective correction.
+  if(count<=3)return [[956,416],[1214,550],[1483,693]].slice(0,count).map(([floorX,floorY],i)=>({id:i+1,x:floorX-88,y:floorY-290,scale:1}));
+  const cols=count<=16?4:8,scale=count<=16?.48:.28,step=count<=16?105:52;
+  return Array.from({length:count},(_,i)=>{
+   const col=i%cols,row=Math.floor(i/cols);
+   return {id:i+1,x:1100+(col-row)*step-88*scale,y:380+(col+row)*step/2-290*scale,scale};
+  });
  }
  return {worlds,selection,layout};
 })();
